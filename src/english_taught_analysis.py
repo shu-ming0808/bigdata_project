@@ -1,4 +1,4 @@
-"""1101–1142 大學部英語授課參與、流向與同課比較（唯讀 MySQL）。
+"""1051–1151 大學部英語授課參與、流向與同課比較（唯讀 MySQL）。
 
 輸出只有彙總資料，沒有學生識別碼。詳細定義見同資料夾的 README.md。
 需要 pandas、numpy，以及已設定的 MySQL login-path；不需要資料庫寫入權限。
@@ -19,7 +19,8 @@ import pandas as pd
 
 HERE = Path(__file__).resolve().parents[1]
 DEFAULT_MYSQL = Path(r"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe")
-TERMS = ["1101", "1102", "1111", "1112", "1121", "1122", "1131", "1132", "1141", "1142"]
+TERMS = [f"{year}{semester}" for year in range(105, 115) for semester in (1, 2)] + ["1151"]
+OUTCOME_COMPLETE_TERMS = TERMS[:-1]  # 此批次 1151 的學分與成績幾乎全空
 LEVELS = ["beginner", "intermediate", "advanced", "unknown"]
 LEVEL_ZH = {"beginner": "初級", "intermediate": "中級", "advanced": "高級", "unknown": "未知"}
 SELECTED = {
@@ -43,12 +44,14 @@ def frame(mysql: Path, login_path: str, database: str, sql: str) -> pd.DataFrame
 
 
 def controls(mysql: Path, login_path: str, database: str) -> dict[str, int]:
-    query = """SELECT
+    term_values = ",".join(f"'{term}'" for term in TERMS)
+    query = f"""SELECT
       (SELECT COUNT(*) FROM student_course_grade_raw) AS grade_rows,
-      (SELECT COUNT(*) FROM enrollment_records) AS enrollment_rows,
-      (SELECT COUNT(*) FROM student_terms) AS student_term_rows,
-      (SELECT COUNT(*) FROM course_offerings) AS offering_rows,
-      (SELECT COUNT(*) FROM offering_english_level) AS level_rows"""
+      (SELECT COUNT(*) FROM enrollment_records WHERE term_code IN ({term_values})) AS enrollment_rows,
+      (SELECT COUNT(*) FROM student_terms WHERE term_code IN ({term_values})) AS student_term_rows,
+      (SELECT COUNT(*) FROM course_offerings WHERE term_code IN ({term_values})) AS offering_rows,
+      (SELECT COUNT(*) FROM offering_english_level l JOIN course_offerings o
+         ON o.offering_id=l.offering_id WHERE o.term_code IN ({term_values})) AS level_rows"""
     return {key: int(value) for key, value in frame(mysql, login_path, database, query).iloc[0].items()}
 
 
@@ -57,19 +60,29 @@ def read_sources(args: argparse.Namespace):
     mapping = {(r["code"].strip(), r["name"].strip()): r["classification"] for r in rules}
     if len(mapping) != len(rules):
         raise ValueError("系所分類規則出現重複鍵")
-    student_terms = frame(args.mysql, args.login_path, args.database, """
+    term_values = ",".join(f"'{term}'" for term in TERMS)
+    emi_column_count = frame(args.mysql, args.login_path, args.database, """
+        SELECT COUNT(*) AS n FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = 'course_offerings'
+          AND column_name = 'emi_raw'
+    """)
+    emi_expression = "o.emi_raw" if int(emi_column_count.iloc[0]["n"]) else "NULL"
+    student_terms = frame(args.mysql, args.login_path, args.database, f"""
         SELECT student_key, term_code, department_code, department_name
         FROM student_terms
+        WHERE term_code IN ({term_values})
     """)
-    offerings = frame(args.mysql, args.login_path, args.database, """
+    offerings = frame(args.mysql, args.login_path, args.database, f"""
         SELECT o.offering_id, o.term_code, o.course_code, o.course_name,
                o.teaching_language_raw AS teaching_language,
                o.offering_status_raw AS offering_status,
+               {emi_expression} AS emi_raw,
                l.english_level
         FROM course_offerings o
         LEFT JOIN offering_english_level l ON l.offering_id = o.offering_id
+        WHERE o.term_code IN ({term_values})
     """)
-    records = frame(args.mysql, args.login_path, args.database, """
+    records = frame(args.mysql, args.login_path, args.database, f"""
         SELECT er.source_grade_row_id AS grade_row_id, er.student_key, er.term_code,
                er.offering_id, r.course_code AS record_course_code,
                r.credits AS credits_raw, r.grade AS grade_raw,
@@ -77,6 +90,7 @@ def read_sources(args: argparse.Namespace):
                r.allocation_result AS allocation_label
         FROM enrollment_records er
         JOIN student_course_grade_raw r ON r.grade_row_id = er.source_grade_row_id
+        WHERE er.term_code IN ({term_values})
     """)
     return mapping, student_terms, offerings, records
 
@@ -101,7 +115,7 @@ def prepare(mapping, student_terms, offerings, records):
         (student_terms.term_code.isin(TERMS)),
         ["student_key", "term_code", "department_code"],
     ].copy()
-    for col in ["course_code", "course_name", "teaching_language", "offering_status", "english_level"]:
+    for col in ["course_code", "course_name", "teaching_language", "offering_status", "english_level", "emi_raw"]:
         offerings[col] = offerings[col].fillna("").str.strip()
     if offerings.offering_id.duplicated().any():
         raise ValueError("course_offerings 的 offering_id 不是唯一")
@@ -117,6 +131,7 @@ def prepare(mapping, student_terms, offerings, records):
     records["teaching_language"] = records["teaching_language"].fillna("").str.strip()
     records["offering_status"] = records["offering_status"].fillna("").str.strip()
     records["english_level"] = records["english_level"].fillna("").str.strip()
+    records["emi_raw"] = records["emi_raw"].fillna("").str.strip()
     records["grade_num"] = pd.to_numeric(records.grade_raw.where(records.grade_raw.str.fullmatch(NUMERIC)),
                                           errors="coerce")
     records["credits_num"] = pd.to_numeric(records.credits_raw.where(records.credits_raw.str.fullmatch(NUMERIC)),
@@ -217,12 +232,13 @@ def stage_one(cohort, attempts):
     result = []
     for level in LEVELS:
         part = roster.loc[roster.prior_level.eq(level)]
+        credit_part = part.loc[part.term_code.isin(OUTCOME_COMPLETE_TERMS)]
         n = len(part)
         yes = int(part.english_yes.sum())
         result.append({"修課前可見英文級別": LEVEL_ZH[level], "學生學期數": n,
                        "曾選入英語授課的學生學期數": yes, "參與率_%": rate(yes, n),
                        "英語授課班次數_每學生學期平均": round(float(part.english_courses.mean()), 3) if n else None,
-                       "英語授課學分_每學生學期平均": round(float(part.english_credits.mean()), 3) if n else None,
+                       "英語授課學分_每學生學期平均": round(float(credit_part.english_credits.mean()), 3) if len(credit_part) else None,
                        "曾選入部分英語授課的學生學期數": int(part.partial_courses.gt(0).sum())})
     return roster, result
 
@@ -292,6 +308,7 @@ def within_model(data, adjusted):
 
 def stage_three(cohort, attempts):
     candidate = attempts.loc[
+        attempts.term_code.isin(OUTCOME_COMPLETE_TERMS) &
         attempts.selected & attempts.target & attempts.teaching_language.isin(["英語", "國語"]) &
         attempts.course_code.ne("") & attempts.course_name.ne("") & attempts.credits_num.gt(0)
     ].copy()
@@ -368,14 +385,14 @@ def markdown(report: dict) -> str:
     flow = report["相鄰學期流向"]
     compare = report["同課同學期比較"]
     output = ["# 英語授課課程：學生能力、修課流向與表現初步分析", "",
-        f"資料：1101–1142；執行時間：{report['產生時間_台灣']}。所有數字為彙總，不含學生識別碼。", "",
+        f"資料：{TERMS[0]}–{TERMS[-1]}；執行時間：{report['產生時間_台灣']}。所有數字為彙總，不含學生識別碼。", "",
         "## 1. 分析範圍與資料品質", "",
         f"依學生逐學期系所代碼與名稱規則辨識大學部，主分析排除英美語文學系；共 {controls['主分析大學部學生數']:,} 位來源學生碼、{controls['主分析學生學期數']:,} 個有修課紀錄的學生學期。",
         f"來源修課列 {controls['全庫修課來源列']:,} 筆；主分析大學部來源列 {controls['主分析大學部來源列']:,} 筆，其中 {controls['主分析未配對開課來源列']:,} 筆缺可用班次鍵。",
         f"有 {controls['同一學生學期班次重複鍵組數']:,} 組多筆來源列；其中 {controls['狀態或成績衝突組數']:,} 組保守排除於參與、流向及成績分析。",
         "本分析的分母為『有修課資料可觀察到的學生學期』，不是正式在學名冊；未觀察到英語課不等於確定沒有選課。", "",
         "## 2. 修課前可見英文級別與英語授課參與", "",
-        "只使用目標學期之前已觀察到的大一英文班次級別。初／中／高是修讀班級的級別，不保證等於入學原始分級；免修者、英文系例外和未觀察到分級者歸未知。課程以選入且未呈退選／免抵免的班次計，部分英語另外列。", "",
+        "只使用目標學期之前已觀察到的大一英文班次級別。初／中／高是修讀班級的級別，不保證等於入學原始分級；免修者、英文系例外和未觀察到分級者歸未知。課程以選入且未呈退選／免抵免的班次計，部分英語另外列。1151 學分與成績缺漏嚴重，學分平均及成績比較僅使用 1051–1142。", "",
         "| 修課前級別 | 學生學期 | 曾選入英語班 | 參與率 | 每學生學期英語班數 | 每學生學期英語學分 |",
         "| --- | ---: | ---: | ---: | ---: | ---: |"]
     for row in first:
@@ -429,7 +446,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mysql", type=Path, default=DEFAULT_MYSQL)
     parser.add_argument("--login-path", default="codex-local")
-    parser.add_argument("--database", default="ncu_course_flow_1101_1142")
+    parser.add_argument("--database", default="ncu_course_flow_1150012")
     parser.add_argument("--department-rules", type=Path, default=HERE / "undergraduate_department_rules.json")
     parser.add_argument("--output-dir", type=Path, default=HERE)
     args = parser.parse_args()

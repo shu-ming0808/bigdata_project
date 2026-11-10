@@ -1,4 +1,4 @@
-"""1101–1142 學生學習模式與資工系單一教師推薦證據（唯讀 MySQL）。"""
+"""1051–1151 學生學習模式與資工系單一教師推薦證據（唯讀 MySQL）。"""
 from __future__ import annotations
 
 import argparse
@@ -48,19 +48,27 @@ def student_term_data(args):
     cohort = assign_prior_levels(cohort, attempts)
     selected = attempts.loc[attempts.selected & attempts.target].copy()
     selected["english"] = selected.teaching_language.eq("英語")
+    selected["emi"] = selected.emi_raw.eq("是")
+    selected["english_non_emi"] = selected.english & selected.emi_raw.eq("否")
     selected["credits_valid"] = selected.credits_num.where(selected.credits_num.between(0, 50), 0)
     selected["english_credits"] = selected.credits_valid.where(selected.english, 0)
+    selected["emi_credits"] = selected.credits_valid.where(selected.emi, 0)
     per_term = selected.groupby(["student_key", "term_code"], observed=True).agg(
         course_count=("offering_id", "size"),
         english_courses=("english", "sum"),
+        emi_courses=("emi", "sum"),
+        english_non_emi_courses=("english_non_emi", "sum"),
         total_credits=("credits_valid", "sum"),
         english_credits=("english_credits", "sum"),
+        emi_credits=("emi_credits", "sum"),
     ).reset_index()
     roster = cohort.merge(per_term, how="left", on=["student_key", "term_code"],
                           validate="one_to_one")
-    numeric = ["course_count", "english_courses", "total_credits", "english_credits"]
+    numeric = ["course_count", "english_courses", "emi_courses", "english_non_emi_courses",
+               "total_credits", "english_credits", "emi_credits"]
     roster[numeric] = roster[numeric].fillna(0)
     roster["english_yes"] = roster.english_courses.gt(0)
+    roster["emi_yes"] = roster.emi_courses.gt(0)
     roster["order"] = roster.term_code.map(TERM_ORDER).astype(int)
     excluded_language_attempts = int((attempts.selected & language_course).sum())
     return roster, attempts, excluded_language_attempts
@@ -80,7 +88,8 @@ def grouped_participation(roster: pd.DataFrame, group: str | list[str]) -> pd.Da
 
 def offering_counts_by_term(args) -> pd.DataFrame:
     """正常開課班次數；研究欄位排除語言學習課及可見大一英文級別。"""
-    return frame(args.mysql, args.login_path, args.database, """
+    term_values = ",".join(f"'{term}'" for term in TERMS)
+    return frame(args.mysql, args.login_path, args.database, f"""
         SELECT o.term_code,
                SUM(o.teaching_language_raw = '英語') AS all_english_classes,
                SUM(o.teaching_language_raw = '英語'
@@ -95,10 +104,28 @@ def offering_counts_by_term(args) -> pd.DataFrame:
                    THEN o.course_code END) AS target_course_codes
         FROM course_offerings o
         LEFT JOIN offering_english_level l ON l.offering_id = o.offering_id
-        WHERE o.offering_status_raw = '正常'
+        WHERE o.offering_status_raw = '正常' AND o.term_code IN ({term_values})
         GROUP BY o.term_code
         ORDER BY o.term_code
     """)
+
+
+def source_completeness_by_term(args) -> pd.DataFrame:
+    """原始修課檔的學分與數字成績覆蓋率；用於判定當期能否分析結果。"""
+    term_values = ",".join(f"'{term}'" for term in TERMS)
+    data = frame(args.mysql, args.login_path, args.database, f"""
+        SELECT term_key AS term_code, COUNT(*) AS grade_rows,
+               SUM(credits IS NULL OR TRIM(credits) = '') AS blank_credit_rows,
+               SUM(grade IS NULL OR TRIM(grade) = '') AS blank_grade_rows
+        FROM student_course_grade_raw
+        WHERE term_key IN ({term_values})
+        GROUP BY term_key ORDER BY term_key
+    """)
+    for col in ["grade_rows", "blank_credit_rows", "blank_grade_rows"]:
+        data[col] = pd.to_numeric(data[col])
+    data["credit_nonblank_pct"] = (100 * (data.grade_rows - data.blank_credit_rows) / data.grade_rows).round(2)
+    data["grade_nonblank_pct"] = (100 * (data.grade_rows - data.blank_grade_rows) / data.grade_rows).round(2)
+    return data
 
 
 def transition_stats(roster: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
@@ -162,12 +189,13 @@ def transition_stats(roster: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
 
 def cluster_students(roster: pd.DataFrame, attempts: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     rows = []
+    never_observed_code = int(roster.order.max()) + 2
     for _, part in roster.sort_values("order").groupby("student_key", sort=False):
         if len(part) < 2:
             continue
         orders = part.order.to_numpy(dtype=int)
         yes = part.english_yes.to_numpy(dtype=bool)
-        first = int(orders[np.argmax(yes)] - orders[0] + 1) if yes.any() else len(TERMS) + 1
+        first = int(orders[np.argmax(yes)] - orders[0] + 1) if yes.any() else never_observed_code
         longest = 0
         streak = 0
         reentries = 0
@@ -285,8 +313,15 @@ def exam_reference(roster: pd.DataFrame, path: Path | None) -> tuple[pd.DataFram
 
 def run_student(args):
     roster, attempts, excluded_language_attempts = student_term_data(args)
+    completeness = source_completeness_by_term(args)
+    save_csv(completeness, args.output_dir / "source_completeness_by_term.csv")
+    outcome_terms = completeness.loc[
+        completeness.credit_nonblank_pct.ge(50) & completeness.grade_nonblank_pct.ge(50), "term_code"
+    ].tolist()
     save_csv(offering_counts_by_term(args), args.output_dir / "offering_counts_by_term.csv")
-    save_csv(grouped_participation(roster, "term_code"), args.output_dir / "participation_by_term.csv")
+    participation = grouped_participation(roster, "term_code")
+    participation.loc[~participation.term_code.isin(outcome_terms), "english_credits"] = pd.NA
+    save_csv(participation, args.output_dir / "participation_by_term.csv")
     save_csv(grouped_participation(roster, "department_code"),
              args.output_dir / "participation_by_department.csv")
     save_csv(grouped_participation(roster, ["term_code", "department_code"]),
@@ -295,9 +330,26 @@ def run_student(args):
              args.output_dir / "participation_department_level.csv")
     save_csv(grouped_participation(roster, "prior_level"),
              args.output_dir / "participation_by_prior_level.csv")
+    emi_terms = sorted(attempts.loc[attempts.emi_raw.isin(["是", "否"]), "term_code"].unique())
+    if emi_terms:
+        emi_period = roster.loc[roster.term_code.isin(emi_terms)]
+        emi_term = emi_period.groupby("term_code", observed=True).agg(
+            student_terms=("student_key", "size"),
+            emi_participating_terms=("emi_yes", "sum"),
+            emi_course_attempts=("emi_courses", "sum"),
+            emi_credits=("emi_credits", "sum"),
+            english_non_emi_course_attempts=("english_non_emi_courses", "sum"),
+        ).reset_index()
+        emi_term["emi_participation_pct"] = (
+            100 * emi_term.emi_participating_terms / emi_term.student_terms).round(2)
+        emi_term.loc[~emi_term.term_code.isin(outcome_terms), "emi_credits"] = pd.NA
+        save_csv(emi_term, args.output_dir / "emi_participation_by_term.csv")
     transitions, flow_summary = transition_stats(roster)
     save_csv(transitions, args.output_dir / "transition_matrix.csv")
-    clusters, cluster_summary = cluster_students(roster, attempts)
+    clusters, cluster_summary = cluster_students(
+        roster.loc[roster.term_code.isin(outcome_terms)],
+        attempts.loc[attempts.term_code.isin(outcome_terms)],
+    )
     save_csv(clusters, args.output_dir / "student_clusters.csv")
     exam_tables, exam_summary = exam_reference(roster, args.exam_csv)
     if exam_summary["status"] == "ok":
@@ -309,6 +361,8 @@ def run_student(args):
                "observed_students": int(roster.student_key.nunique()),
                "excluded_language_course_attempts": excluded_language_attempts,
                "english_participating_student_terms": int(roster.english_yes.sum()),
+               "outcome_complete_terms": outcome_terms,
+               "incomplete_outcome_terms": [term for term in TERMS if term not in outcome_terms],
                "flow": flow_summary, "clustering": cluster_summary, "exam": exam_summary}
     (args.output_dir / "student_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -437,7 +491,7 @@ def main():
     parser.add_argument("--exam-csv", type=Path, help="獲授權取得的個人入學英文成績 CSV")
     parser.add_argument("--mysql", type=Path, default=DEFAULT_MYSQL)
     parser.add_argument("--login-path", default="codex-local")
-    parser.add_argument("--database", default="ncu_course_flow_1101_1142")
+    parser.add_argument("--database", default="ncu_course_flow_1150012")
     parser.add_argument("--department-rules", type=Path,
                         default=HERE / "undergraduate_department_rules.json")
     parser.add_argument("--output-dir", type=Path, default=HERE / "outputs" / "dual_project")
