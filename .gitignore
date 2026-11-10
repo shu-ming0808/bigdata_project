@@ -15,6 +15,11 @@
 data/
 raw/
 exports/
+/outputs/
+/notebooks/*
+!/notebooks/.gitkeep
+*.ipynb
+.ipynb_checkpoints/
 
 # 本機分析結果與含校務資料結構的工作文件
 /analysis_results.json
