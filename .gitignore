@@ -1,0 +1,46 @@
+# 校務原始資料與可能包含個資的匯出檔
+*.csv
+*.tsv
+*.xls
+*.xlsx
+*.zip
+*.7z
+*.rar
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+*.sql.gz
+*.bak
+data/
+raw/
+exports/
+
+# 本機分析結果與含校務資料結構的工作文件
+/analysis_results.json
+/historical_*_profile.json
+/historical_*_import_report.json
+/undergraduate_department_rules.json
+/README.md
+/分析結果.md
+/歷史資料_欄位與鍵值說明.md
+/專案移轉與1051-1092分析規劃.md
+/*.tex
+
+# 本機憑證與環境設定
+.env
+.env.*
+!.env.example
+.mylogin.cnf
+*.pem
+*.key
+
+# Python 與排版暫存
+__pycache__/
+*.py[cod]
+tmp/
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
