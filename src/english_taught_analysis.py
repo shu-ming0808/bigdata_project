@@ -152,6 +152,7 @@ def prepare(mapping, student_terms, offerings, records):
     attempts["target"] = (
         ~attempts.course_code.str.startswith("LN") &
         ~attempts.course_name.str.contains("大一英文|進修英文|TOEIC|英文能力鑑定|英語能力鑑定", regex=True) &
+        ~attempts.english_level.isin(LEVELS[:-1]) &
         attempts.teaching_language.isin(["英語", "國語", "部份英語"])
     )
     return cohort, records, attempts

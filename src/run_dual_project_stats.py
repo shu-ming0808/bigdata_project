@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
 
 from english_taught_analysis import (
-    DEFAULT_MYSQL, HERE, LEVEL_ZH, TERMS, assign_prior_levels, frame, prepare,
+    DEFAULT_MYSQL, HERE, LEVELS, LEVEL_ZH, TERMS, assign_prior_levels, frame, prepare,
     read_sources,
 )
 
@@ -37,6 +37,14 @@ def ratio(numerator: int, denominator: int) -> float | None:
 def student_term_data(args):
     mapping, student_terms, offerings, raw = read_sources(args)
     cohort, _, attempts = prepare(mapping, student_terms, offerings, raw)
+    language_course = (
+        attempts.course_code.str.startswith("LN") |
+        attempts.course_name.str.contains(
+            "大一英文|進修英文|TOEIC|英文能力鑑定|英語能力鑑定", regex=True) |
+        attempts.english_level.isin(LEVELS[:-1])
+    )
+    if (attempts.selected & attempts.target & language_course).any():
+        raise ValueError("語言學習課程混入英語授課專業課分析")
     cohort = assign_prior_levels(cohort, attempts)
     selected = attempts.loc[attempts.selected & attempts.target].copy()
     selected["english"] = selected.teaching_language.eq("英語")
@@ -54,7 +62,8 @@ def student_term_data(args):
     roster[numeric] = roster[numeric].fillna(0)
     roster["english_yes"] = roster.english_courses.gt(0)
     roster["order"] = roster.term_code.map(TERM_ORDER).astype(int)
-    return roster, attempts
+    excluded_language_attempts = int((attempts.selected & language_course).sum())
+    return roster, attempts, excluded_language_attempts
 
 
 def grouped_participation(roster: pd.DataFrame, group: str | list[str]) -> pd.DataFrame:
@@ -67,6 +76,29 @@ def grouped_participation(roster: pd.DataFrame, group: str | list[str]) -> pd.Da
     out["participation_pct"] = (
         100 * out.participating_terms / out.student_terms).round(2)
     return out.sort_values(group)
+
+
+def offering_counts_by_term(args) -> pd.DataFrame:
+    """正常開課班次數；研究欄位排除語言學習課及可見大一英文級別。"""
+    return frame(args.mysql, args.login_path, args.database, """
+        SELECT o.term_code,
+               SUM(o.teaching_language_raw = '英語') AS all_english_classes,
+               SUM(o.teaching_language_raw = '英語'
+                   AND o.course_code NOT LIKE 'LN%'
+                   AND o.course_name NOT REGEXP '大一英文|進修英文|TOEIC|英文能力鑑定|英語能力鑑定'
+                   AND COALESCE(l.english_level, '') NOT IN ('beginner','intermediate','advanced')
+               ) AS target_english_classes,
+               COUNT(DISTINCT CASE WHEN o.teaching_language_raw = '英語'
+                   AND o.course_code NOT LIKE 'LN%'
+                   AND o.course_name NOT REGEXP '大一英文|進修英文|TOEIC|英文能力鑑定|英語能力鑑定'
+                   AND COALESCE(l.english_level, '') NOT IN ('beginner','intermediate','advanced')
+                   THEN o.course_code END) AS target_course_codes
+        FROM course_offerings o
+        LEFT JOIN offering_english_level l ON l.offering_id = o.offering_id
+        WHERE o.offering_status_raw = '正常'
+        GROUP BY o.term_code
+        ORDER BY o.term_code
+    """)
 
 
 def transition_stats(roster: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
@@ -252,7 +284,8 @@ def exam_reference(roster: pd.DataFrame, path: Path | None) -> tuple[pd.DataFram
 
 
 def run_student(args):
-    roster, attempts = student_term_data(args)
+    roster, attempts, excluded_language_attempts = student_term_data(args)
+    save_csv(offering_counts_by_term(args), args.output_dir / "offering_counts_by_term.csv")
     save_csv(grouped_participation(roster, "term_code"), args.output_dir / "participation_by_term.csv")
     save_csv(grouped_participation(roster, "department_code"),
              args.output_dir / "participation_by_department.csv")
@@ -274,6 +307,7 @@ def run_student(args):
             save_csv(listening, args.output_dir / "participation_by_listening_level.csv")
     summary = {"period": [TERMS[0], TERMS[-1]], "student_terms": len(roster),
                "observed_students": int(roster.student_key.nunique()),
+               "excluded_language_course_attempts": excluded_language_attempts,
                "english_participating_student_terms": int(roster.english_yes.sum()),
                "flow": flow_summary, "clustering": cluster_summary, "exam": exam_summary}
     (args.output_dir / "student_summary.json").write_text(
@@ -290,6 +324,47 @@ def run_teacher(args):
         evidence[col] = evidence[col].fillna("").str.strip()
     evidence = evidence.loc[evidence.instructor_name.ne("")].copy()
     cs = evidence.loc[evidence.department_name.eq("資訊工程學系")].copy()
+    language_mask = (
+        evidence.course_code.str.startswith("LN") |
+        evidence.course_name.str.contains(
+            "大一英文|進修英文|TOEIC|英文能力鑑定|英語能力鑑定", regex=True)
+    )
+    comparable = evidence.loc[
+        ~language_mask & evidence.course_code.ne("") &
+        evidence.teaching_language_raw.isin(["國語", "英語"])
+    ].copy()
+    cs_comparable = comparable.loc[comparable.department_name.eq("資訊工程學系")].copy()
+
+    def both_languages(data: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
+        grouped = data.groupby(keys, observed=True).teaching_language_raw.nunique().reset_index()
+        return grouped.loc[grouped.teaching_language_raw.eq(2), keys]
+
+    all_pairs = both_languages(comparable, ["instructor_name", "course_code"])
+    cs_pairs = both_languages(cs_comparable, ["instructor_name", "course_code"])
+    all_same_term = both_languages(comparable, ["instructor_name", "course_code", "term_code"])
+    cs_same_term = both_languages(cs_comparable, ["instructor_name", "course_code", "term_code"])
+    course_summary = cs_pairs.groupby("course_code").size().rename("matching_teachers").reset_index()
+    cs_names = cs_comparable.sort_values("term_code").drop_duplicates("course_code", keep="last")
+    course_summary = course_summary.merge(cs_names[["course_code", "course_name"]],
+                                          on="course_code", how="left", validate="one_to_one")
+    save_csv(course_summary[["course_code", "course_name", "matching_teachers"]],
+             args.output_dir / "same_teacher_language_courses.csv")
+    teacher_language_summary = {
+        "same_teacher_same_course_across_terms": {
+            "all_course_codes": int(all_pairs.course_code.nunique()),
+            "all_teacher_course_pairs": len(all_pairs),
+            "cs_course_codes": int(cs_pairs.course_code.nunique()),
+            "cs_teacher_course_pairs": len(cs_pairs),
+        },
+        "same_teacher_same_course_same_term": {
+            "all_course_codes": int(all_same_term.course_code.nunique()),
+            "all_teacher_course_term_groups": len(all_same_term),
+            "cs_course_codes": int(cs_same_term.course_code.nunique()),
+            "cs_teacher_course_term_groups": len(cs_same_term),
+        },
+    }
+    (args.output_dir / "teacher_language_summary.json").write_text(
+        json.dumps(teacher_language_summary, ensure_ascii=False, indent=2), encoding="utf-8")
     targets = frame(args.mysql, args.login_path, args.database, """
         SELECT course_code, course_name, term_code FROM solo_teacher_offering_evidence
         WHERE department_name = '資訊工程學系'
