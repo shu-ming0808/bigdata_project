@@ -466,17 +466,26 @@ def run_teacher(args):
             formal_emi_unknown = int(all_history.formal_emi_status.eq("unknown").sum())
             recent = all_history.sort_values("term_order").iloc[-1].term_code
             same_n = len(same)
+            same_english = int(same.teaching_language_raw.eq("英語").sum())
+            same_emi = int(same.formal_emi_status.eq("yes").sum())
+            latest_same = same.sort_values("term_order").iloc[-1].term_code if same_n else ""
             related_n = len(related)
             max_sim = float(related.similarity.max()) if related_n else 0.0
-            recency = max(0, int(all_history.term_order.max())) / max(1, len(TERMS) - 1)
-            score = (5 * min(same_n, 3) + 2 * max_sim +
-                     min(english_count, 5) + 2 * min(formal_emi_count, 3) + recency)
+            recency = (max(0, int(same.term_order.max())) if same_n else
+                       max(0, int(all_history.term_order.max()))) / max(1, len(TERMS) - 1)
+            score = (7 * min(same_n, 3) + 12 * min(same_emi, 3) +
+                     3 * min(same_english, 3) + 2 * max_sim +
+                     min(english_count, 5) + 0.5 * min(formal_emi_count, 3) +
+                     recency)
             candidates.append({"course_code": target.course_code,
                                "course_name": target.course_name,
                                "course_attribute": target.course_attribute,
                                "degree_level": target.degree_level,
                                "instructor_name": instructor,
                                "same_course_offerings": same_n,
+                               "same_course_english_offerings": same_english,
+                               "same_course_formal_emi_offerings": same_emi,
+                               "latest_same_course_term": latest_same,
                                "related_course_offerings": related_n,
                                "related_course_example": related.iloc[0].course_name if related_n else "",
                                "related_title_similarity": round(max_sim, 3),

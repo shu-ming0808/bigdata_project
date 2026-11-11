@@ -31,6 +31,7 @@ def summarize(roster: pd.DataFrame) -> tuple[dict, pd.DataFrame, pd.DataFrame, p
     at_least_eight_observed = 0
     with_english = 0
     newest_incomplete = 0
+    seven_then_missing_eighth = 0
     cohort_terms = []
     observed_students = int(roster.student_key.nunique())
     newest_order = int(roster.order.max())
@@ -45,6 +46,9 @@ def summarize(roster: pd.DataFrame) -> tuple[dict, pd.DataFrame, pd.DataFrame, p
         while (segment_length < len(orders) and
                orders[segment_length] == orders[segment_length - 1] + 1):
             segment_length += 1
+        if (segment_length == 7 and orders[0] + 7 <= newest_order and
+                not (orders[-1] == newest_order and len(orders) < 8)):
+            seven_then_missing_eighth += 1
         if segment_length < 8:
             continue
         eligible += 1
@@ -86,10 +90,14 @@ def summarize(roster: pd.DataFrame) -> tuple[dict, pd.DataFrame, pd.DataFrame, p
         "observed_undergraduate_students_denominator": observed_students,
         "newest_term_students_with_fewer_than_eight_observed_terms_excluded_from_share_denominator": newest_incomplete,
         "adjusted_denominator": observed_students - newest_incomplete,
+        "first_seven_consecutive_then_eighth_missing_excluded_in_sensitivity": seven_then_missing_eighth,
+        "sensitivity_denominator": observed_students - newest_incomplete - seven_then_missing_eighth,
         "students_with_at_least_eight_observed_terms_even_if_gapped": at_least_eight_observed,
         "students_with_eight_or_more_consecutive_terms_from_first_visible_term": eligible,
         "cohort_share_of_adjusted_denominator_pct": round(
             100 * eligible / (observed_students - newest_incomplete), 2),
+        "cohort_share_excluding_missing_eighth_pct": round(
+            100 * eligible / (observed_students - newest_incomplete - seven_then_missing_eighth), 2),
         "students_with_english_in_first_eight_terms": with_english,
         "degree_scope": "undergraduate department + at least one explicit 大學 label; "
                         "blank labels allowed before any explicit graduate term",
