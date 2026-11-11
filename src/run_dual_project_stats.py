@@ -24,6 +24,15 @@ THRESHOLDS = {
     (114, "學測"): (13, 11, 8), (110, "指考"): (84, 76, 54),
 }
 TERM_ORDER = {term: i for i, term in enumerate(TERMS)}
+TEACHER_RUBRIC = {
+    "same_course_points": 30,
+    "formal_emi_points": 30,
+    "english_teaching_points": 15,
+    "related_course_points": 15,
+    "overall_recency_points": 10,
+    "total_points": 100,
+    "meaning": "歷史授課證據強度；不是教學品質或行政可派任資格",
+}
 
 
 def save_csv(data: pd.DataFrame, path: Path) -> None:
@@ -471,12 +480,20 @@ def run_teacher(args):
             latest_same = same.sort_values("term_order").iloc[-1].term_code if same_n else ""
             related_n = len(related)
             max_sim = float(related.similarity.max()) if related_n else 0.0
-            recency = (max(0, int(same.term_order.max())) if same_n else
-                       max(0, int(all_history.term_order.max()))) / max(1, len(TERMS) - 1)
-            score = (7 * min(same_n, 3) + 12 * min(same_emi, 3) +
-                     3 * min(same_english, 3) + 2 * max_sim +
-                     min(english_count, 5) + 0.5 * min(formal_emi_count, 3) +
-                     recency)
+            max_term_order = max(1, len(TERMS) - 1)
+            same_recency = (max(0, int(same.term_order.max())) / max_term_order
+                            if same_n else 0.0)
+            overall_recency = max(0, int(all_history.term_order.max())) / max_term_order
+            same_points = 20 * min(same_n, 3) / 3 + 10 * same_recency
+            emi_points = (20 * min(same_emi, 2) / 2 +
+                          10 * min(max(formal_emi_count - same_emi, 0), 3) / 3)
+            english_points = (10 * min(same_english, 2) / 2 +
+                              5 * min(max(english_count - same_english, 0), 5) / 5)
+            related_points = 10 * max_sim + 5 * min(related_n, 3) / 3
+            recent_points = 10 * overall_recency
+            score = same_points + emi_points + english_points + related_points + recent_points
+            if not 0 <= score <= 100.000001:
+                raise ValueError(f"教師證據分數超出 0–100：{score}")
             candidates.append({"course_code": target.course_code,
                                "course_name": target.course_name,
                                "course_attribute": target.course_attribute,
@@ -497,10 +514,16 @@ def run_teacher(args):
                                "related_offering_ids": ",".join(
                                    str(x) for x in related.offering_id.tolist()),
                                "latest_observed_term": recent,
-                               "score": round(score, 3),
+                               "same_course_points": round(same_points, 2),
+                               "formal_emi_points": round(emi_points, 2),
+                               "english_teaching_points": round(english_points, 2),
+                               "related_course_points": round(related_points, 2),
+                               "overall_recency_points": round(recent_points, 2),
+                               "score_0_to_100": round(score, 2),
+                               "score_scope": "歷史授課證據，行政資格待核對",
                                "administrative_eligibility": "待人工確認",
                                "instructor_identity_quality": "僅有姓名，未核對教師人事編號"})
-        candidates.sort(key=lambda row: (-row["score"], -row["same_course_offerings"],
+        candidates.sort(key=lambda row: (-row["score_0_to_100"], -row["same_course_offerings"],
                                          -row["past_english_offerings"], row["instructor_name"]))
         coverage.append({"course_code": target.course_code, "course_name": target.course_name,
                          "evidence_based_candidates": len(candidates),
@@ -544,6 +567,8 @@ def run_teacher(args):
                 })
     save_csv(pd.DataFrame(coverage), args.output_dir / "teacher_coverage.csv")
     save_csv(pd.DataFrame(top), args.output_dir / "teacher_top3.csv")
+    (args.output_dir / "teacher_rubric.json").write_text(
+        json.dumps(TEACHER_RUBRIC, ensure_ascii=False, indent=2), encoding="utf-8")
     history_columns = [
         "target_course_code", "rank", "instructor_name", "taught_course_code",
         "taught_course_name", "relation_to_target", "title_similarity",

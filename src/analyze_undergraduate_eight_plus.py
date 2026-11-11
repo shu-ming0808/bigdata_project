@@ -147,6 +147,9 @@ def main() -> None:
     from undergraduate_outcome_model import analyze
     summary["outcome_analysis"] = analyze(
         args, cohort_terms, attempts, COLLEGES, args.output_dir)
+    from undergraduate_first_start_supply import analyze as analyze_first_start
+    summary["first_start_supply_analysis"] = analyze_first_start(
+        args, cohort_terms, COLLEGES, args.output_dir)
     (args.output_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(summary, ensure_ascii=False, indent=2))
