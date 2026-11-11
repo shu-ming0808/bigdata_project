@@ -34,9 +34,11 @@ def ratio(numerator: int, denominator: int) -> float | None:
     return round(100 * numerator / denominator, 2) if denominator else None
 
 
-def student_term_data(args):
+def student_term_data(args, degree_scope="confirmed", exclude_english_major=True):
     mapping, student_terms, offerings, raw = read_sources(args)
-    cohort, _, attempts = prepare(mapping, student_terms, offerings, raw)
+    cohort, _, attempts = prepare(
+        mapping, student_terms, offerings, raw, degree_scope=degree_scope,
+        exclude_english_major=exclude_english_major)
     language_course = (
         attempts.course_code.str.startswith("LN") |
         attempts.course_name.str.contains(
@@ -371,8 +373,10 @@ def run_student(args):
 
 def run_teacher(args):
     sql = """SELECT offering_id, term_code, course_code, course_name,
-                    department_name, teaching_language_raw, instructor_name
-             FROM solo_teacher_offering_evidence"""
+                    department_name, course_attribute, degree_level,
+                    teaching_language AS teaching_language_raw,
+                    formal_emi_status, instructor_name
+             FROM shared_1150012_solo_teacher_v"""
     evidence = frame(args.mysql, args.login_path, args.database, sql)
     for col in ["course_code", "course_name", "department_name", "teaching_language_raw", "instructor_name"]:
         evidence[col] = evidence[col].fillna("").str.strip()
@@ -420,17 +424,22 @@ def run_teacher(args):
     (args.output_dir / "teacher_language_summary.json").write_text(
         json.dumps(teacher_language_summary, ensure_ascii=False, indent=2), encoding="utf-8")
     targets = frame(args.mysql, args.login_path, args.database, """
-        SELECT course_code, course_name, term_code FROM solo_teacher_offering_evidence
+        SELECT course_code, course_name, term_code, course_attribute, degree_level
+        FROM shared_1150012_solo_teacher_v
         WHERE department_name = '資訊工程學系'
           AND course_code IS NOT NULL AND TRIM(course_code) <> ''
     """)
     for col in ["course_code", "course_name", "term_code"]:
         targets[col] = targets[col].fillna("").str.strip()
+    if args.required_only:
+        targets = targets.loc[
+            targets.course_attribute.eq("必修") & targets.degree_level.eq("學士班")
+        ].copy()
     targets = targets.sort_values("term_code").drop_duplicates("course_code", keep="last")
     if args.course_code:
         targets = targets.loc[targets.course_code.eq(args.course_code)].copy()
         if targets.empty:
-            raise ValueError(f"資工系正常開課資料查無課號：{args.course_code}")
+            raise ValueError(f"資工系符合條件的正常開課資料查無課號：{args.course_code}")
     # 課名相似度是候選發現工具；同課號是較強的客觀證據。
     names = pd.concat([targets.course_name, cs.course_name], ignore_index=True).fillna("")
     vectorizer = TfidfVectorizer(analyzer="char", ngram_range=(2, 4))
@@ -440,6 +449,7 @@ def run_teacher(args):
     cs["term_order"] = cs.term_code.map(TERM_ORDER).fillna(-1).astype(int)
     coverage = []
     top = []
+    required_histories = []
     for target_index, target in enumerate(targets.itertuples(index=False)):
         candidate_rows = cs.copy()
         candidate_rows["similarity"] = similarities[target_index]
@@ -452,24 +462,35 @@ def run_teacher(args):
             related = part.loc[part.related].sort_values("similarity", ascending=False)
             all_history = cs.loc[cs.instructor_name.eq(instructor)]
             english_count = int(all_history.teaching_language_raw.eq("英語").sum())
+            formal_emi_count = int(all_history.formal_emi_status.eq("yes").sum())
+            formal_emi_unknown = int(all_history.formal_emi_status.eq("unknown").sum())
             recent = all_history.sort_values("term_order").iloc[-1].term_code
             same_n = len(same)
             related_n = len(related)
             max_sim = float(related.similarity.max()) if related_n else 0.0
             recency = max(0, int(all_history.term_order.max())) / max(1, len(TERMS) - 1)
-            score = 5 * min(same_n, 3) + 2 * max_sim + min(english_count, 5) + recency
+            score = (5 * min(same_n, 3) + 2 * max_sim +
+                     min(english_count, 5) + 2 * min(formal_emi_count, 3) + recency)
             candidates.append({"course_code": target.course_code,
                                "course_name": target.course_name,
+                               "course_attribute": target.course_attribute,
+                               "degree_level": target.degree_level,
                                "instructor_name": instructor,
                                "same_course_offerings": same_n,
                                "related_course_offerings": related_n,
                                "related_course_example": related.iloc[0].course_name if related_n else "",
                                "related_title_similarity": round(max_sim, 3),
                                "past_english_offerings": english_count,
+                               "past_formal_emi_offerings": formal_emi_count,
+                               "past_formal_emi_unknown_offerings": formal_emi_unknown,
+                               "same_course_offering_ids": ",".join(
+                                   str(x) for x in same.offering_id.tolist()),
+                               "related_offering_ids": ",".join(
+                                   str(x) for x in related.offering_id.tolist()),
                                "latest_observed_term": recent,
                                "score": round(score, 3),
                                "administrative_eligibility": "待人工確認",
-                               "official_emi_status": "未核對"})
+                               "instructor_identity_quality": "僅有姓名，未核對教師人事編號"})
         candidates.sort(key=lambda row: (-row["score"], -row["same_course_offerings"],
                                          -row["past_english_offerings"], row["instructor_name"]))
         coverage.append({"course_code": target.course_code, "course_name": target.course_name,
@@ -477,8 +498,52 @@ def run_teacher(args):
                          "at_least_three": int(len(candidates) >= 3)})
         for rank, candidate in enumerate(candidates[:3], start=1):
             top.append({"rank": rank, **candidate})
+            history = cs.loc[
+                cs.instructor_name.eq(candidate["instructor_name"]) &
+                cs.course_attribute.eq("必修") & cs.degree_level.eq("學士班") &
+                cs.course_code.ne("")
+            ].copy()
+            if history.empty:
+                continue
+            # The same TF-IDF representation used for candidate discovery also
+            # gives an explicitly labelled title-similarity *proxy* for display.
+            history["title_similarity"] = similarities[target_index, history.index]
+            for (code, name), taught in history.groupby(
+                    ["course_code", "course_name"], sort=True):
+                terms = sorted(set(taught.term_code.tolist()))
+                similarity = float(taught.title_similarity.max())
+                relation = ("同課號" if code == target.course_code else
+                            "課名相近" if similarity >= 0.25 else "其他曾教必修")
+                required_histories.append({
+                    "target_course_code": target.course_code,
+                    "rank": rank,
+                    "instructor_name": candidate["instructor_name"],
+                    "taught_course_code": code,
+                    "taught_course_name": name,
+                    "relation_to_target": relation,
+                    "title_similarity": round(similarity, 3),
+                    "academic_years": ",".join(sorted({t[:3] for t in terms})),
+                    "terms_taught": ",".join(terms),
+                    "offering_count": len(taught),
+                    "english_offerings": int(taught.teaching_language_raw.eq("英語").sum()),
+                    "formal_emi_yes_offerings": int(taught.formal_emi_status.eq("yes").sum()),
+                    "formal_emi_unknown_offerings": int(
+                        taught.formal_emi_status.eq("unknown").sum()),
+                    "evidence_offering_ids": ",".join(
+                        str(x) for x in taught.offering_id.tolist()),
+                    "instructor_identity_quality": "僅有姓名，未核對教師人事編號",
+                })
     save_csv(pd.DataFrame(coverage), args.output_dir / "teacher_coverage.csv")
     save_csv(pd.DataFrame(top), args.output_dir / "teacher_top3.csv")
+    history_columns = [
+        "target_course_code", "rank", "instructor_name", "taught_course_code",
+        "taught_course_name", "relation_to_target", "title_similarity",
+        "academic_years", "terms_taught", "offering_count", "english_offerings",
+        "formal_emi_yes_offerings", "formal_emi_unknown_offerings",
+        "evidence_offering_ids", "instructor_identity_quality",
+    ]
+    save_csv(pd.DataFrame(required_histories, columns=history_columns),
+             args.output_dir / "teacher_required_history.csv")
     count = sum(row["at_least_three"] for row in coverage)
     print(f"教師推薦完成：{len(coverage)} 個資工系課號；{count} 個有至少三位證據候選人")
 
@@ -488,6 +553,8 @@ def main():
     parser.add_argument("--student", action="store_true")
     parser.add_argument("--teacher", action="store_true")
     parser.add_argument("--course-code", help="限定資工系課號；僅用於教師推薦")
+    parser.add_argument("--required-only", action="store_true",
+                        help="教師推薦只以資工系學士班必修開課為目標")
     parser.add_argument("--exam-csv", type=Path, help="獲授權取得的個人入學英文成績 CSV")
     parser.add_argument("--mysql", type=Path, default=DEFAULT_MYSQL)
     parser.add_argument("--login-path", default="codex-local")
@@ -500,6 +567,8 @@ def main():
         parser.error("請指定 --student 或 --teacher（可同時指定）")
     if args.course_code and not args.teacher:
         parser.error("--course-code 需搭配 --teacher")
+    if args.required_only and not args.teacher:
+        parser.error("--required-only 需搭配 --teacher")
     if args.exam_csv and not args.student:
         parser.error("--exam-csv 需搭配 --student")
     args.output_dir.mkdir(parents=True, exist_ok=True)

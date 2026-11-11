@@ -68,7 +68,8 @@ def read_sources(args: argparse.Namespace):
     """)
     emi_expression = "o.emi_raw" if int(emi_column_count.iloc[0]["n"]) else "NULL"
     student_terms = frame(args.mysql, args.login_path, args.database, f"""
-        SELECT student_key, term_code, department_code, department_name
+        SELECT student_key, term_code, department_code, department_name,
+               degree_type_name
         FROM student_terms
         WHERE term_code IN ({term_values})
     """)
@@ -95,7 +96,8 @@ def read_sources(args: argparse.Namespace):
     return mapping, student_terms, offerings, records
 
 
-def prepare(mapping, student_terms, offerings, records):
+def prepare(mapping, student_terms, offerings, records, degree_scope="confirmed",
+            exclude_english_major=True):
     for table, cols in [(student_terms, ["student_key"]),
                         (offerings, ["offering_id"]),
                         (records, ["grade_row_id", "student_key", "offering_id"])]:
@@ -103,15 +105,34 @@ def prepare(mapping, student_terms, offerings, records):
             table[col] = pd.to_numeric(table[col], errors="coerce").astype("Int64")
     for table in [student_terms, offerings, records]:
         table["term_code"] = table["term_code"].fillna("").str.strip()
-    for col in ["department_code", "department_name"]:
+    for col in ["department_code", "department_name", "degree_type_name"]:
         student_terms[col] = student_terms[col].fillna("").str.strip()
     student_terms["classification"] = [mapping.get(pair, "unknown") for pair in
         zip(student_terms.department_code, student_terms.department_name)]
     if student_terms.duplicated(["student_key", "term_code"]).any():
         raise ValueError("student_terms 的學生＋學期不是唯一")
+    if degree_scope == "confirmed":
+        degree_ok = student_terms.degree_type_name.eq("大學")
+    elif degree_scope == "observed_undergraduate":
+        # Allow missing semester labels only for students with an explicit
+        # undergraduate label somewhere, and only before any graduate label.
+        group = student_terms.groupby("student_key", sort=False).degree_type_name
+        has_undergrad = group.transform(lambda s: s.eq("大學").any())
+        graduate = student_terms.degree_type_name.isin(
+            ["碩士", "博士", "碩博同修", "碩士在職專班"])
+        first_graduate_term = student_terms.term_code.where(graduate).groupby(
+            student_terms.student_key).transform("min")
+        degree_ok = (has_undergrad &
+                     student_terms.degree_type_name.isin(["大學", ""]) &
+                     (first_graduate_term.isna() |
+                      student_terms.term_code.lt(first_graduate_term)))
+    else:
+        raise ValueError(f"Unknown degree_scope: {degree_scope}")
     cohort = student_terms.loc[
         (student_terms.classification == "undergraduate") &
-        (student_terms.department_code != "1002") &
+        ((student_terms.department_code != "1002") if exclude_english_major
+         else True) &
+        degree_ok &
         (student_terms.term_code.isin(TERMS)),
         ["student_key", "term_code", "department_code"],
     ].copy()
