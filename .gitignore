@@ -43,6 +43,7 @@ exports/
 # Python 與排版暫存
 __pycache__/
 *.py[cod]
+.venv/
 tmp/
 *.aux
 *.log
