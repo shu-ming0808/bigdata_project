@@ -15,7 +15,8 @@ from sklearn.linear_model import LogisticRegression
 from analyze_trends_sequences import supply_by_term_department
 
 
-def analyze(args, cohort_terms: pd.DataFrame, colleges: dict[str, str],
+def analyze(args, cohort_terms: pd.DataFrame, attempts: pd.DataFrame,
+            colleges: dict[str, str],
             output_dir: Path) -> dict:
     supply = supply_by_term_department(args)
     supply = supply.loc[supply.degree_level.eq("學士班")].copy()
@@ -105,6 +106,87 @@ def analyze(args, cohort_terms: pd.DataFrame, colleges: dict[str, str],
                          "schedule_conflicts", "student_preference"],
         "student_identifiers_exported": False,
     }
+    # The grade is measured in the immediately preceding observed semester,
+    # before a student's first English-taught professional course.
+    scored = attempts.loc[
+        attempts.target & attempts.score_ok & attempts.credits_num.gt(0) &
+        attempts.teaching_language.eq("國語"),
+        ["student_key", "term_code", "grade_num", "credits_num"],
+    ].copy()
+    scored["weighted"] = scored.grade_num * scored.credits_num
+    grades = scored.groupby(["student_key", "term_code"], observed=True).agg(
+        weighted=("weighted", "sum"), credits=("credits_num", "sum")
+    ).reset_index()
+    grades["previous_term_score"] = grades.weighted / grades.credits
+    with_grade = rows.merge(grades[["student_key", "term_code", "previous_term_score",
+                                    "credits"]], on=["student_key", "term_code"],
+                            how="left", validate="one_to_one")
+    with_grade = with_grade.sort_values(["student_key", "position"])
+    for column in ["previous_term_score", "credits"]:
+        with_grade[f"lagged_{column}"] = with_grade.groupby("student_key", sort=False)[
+            column].shift(1)
+    grade_risk = with_grade.loc[
+        with_grade.previous_english.eq(0) & with_grade.position.ge(2) &
+        with_grade.lagged_credits.ge(3) &
+        with_grade.lagged_previous_term_score.between(0, 100)
+    ].copy()
+    grade_risk["first_start"] = grade_risk.english_yes.astype(int)
+    grade_risk["log_supply"] = np.log1p(
+        grade_risk.college_bachelor_english_offerings)
+    grade_risk["lagged_score_per_10"] = grade_risk.lagged_previous_term_score / 10
+
+    def grade_fit(add_grade: bool) -> dict:
+        columns = ["log_supply", "position", "college", "first_observed_term"]
+        if add_grade:
+            columns.append("lagged_score_per_10")
+        design_frame = pd.get_dummies(grade_risk[columns],
+                                      columns=["position", "college",
+                                               "first_observed_term"],
+                                      drop_first=True, dtype=float)
+        design_x = design_frame.to_numpy(dtype=float)
+        labels = grade_risk.first_start.to_numpy(dtype=int)
+        estimator = LogisticRegression(C=1e6, max_iter=600, solver="lbfgs")
+        estimator.fit(design_x, labels)
+        estimates = estimator.coef_[0]
+        fitted = estimator.predict_proba(design_x)[:, 1]
+        complete_design = np.column_stack([np.ones(len(design_x)), design_x])
+        info = complete_design.T @ (
+            complete_design * (fitted * (1 - fitted))[:, None])
+        bread = np.linalg.pinv(info)
+        scores = pd.DataFrame(complete_design * (labels - fitted)[:, None])
+        scores["student_key"] = grade_risk.student_key.to_numpy()
+        cluster_scores = scores.groupby("student_key", sort=False).sum().to_numpy()
+        covariance = bread @ (cluster_scores.T @ cluster_scores) @ bread
+        output = {}
+        for feature in (["log_supply", "lagged_score_per_10"] if add_grade
+                        else ["log_supply"]):
+            feature_index = design_frame.columns.get_loc(feature)
+            beta = float(estimates[feature_index])
+            error = float(np.sqrt(max(0.0, covariance[
+                feature_index + 1, feature_index + 1])))
+            output[feature] = {
+                "odds_ratio": round(float(np.exp(beta)), 3),
+                "cluster_robust_95pct_interval": [
+                    round(float(np.exp(beta - 1.96 * error)), 3),
+                    round(float(np.exp(beta + 1.96 * error)), 3)],
+            }
+        return output
+
+    if len(grade_risk) and grade_risk.first_start.nunique() == 2:
+        result["lagged_grade_analysis"] = {
+            "status": "ok",
+            "comparable_at_risk_student_terms": len(grade_risk),
+            "comparable_students": int(grade_risk.student_key.nunique()),
+            "first_starts": int(grade_risk.first_start.sum()),
+            "minimum_prior_term_mandarin_professional_credits": 3,
+            "same_sample_without_grade": grade_fit(False),
+            "same_sample_with_lagged_grade": grade_fit(True),
+            "grade_unit": "10 points in previous semester's credit-weighted grade",
+            "interpretation": "observational association; students with missing prior grades excluded",
+        }
+    else:
+        result["lagged_grade_analysis"] = {
+            "status": "insufficient_comparable_rows", "rows": len(grade_risk)}
     (output_dir / "first_start_supply_summary.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     return result

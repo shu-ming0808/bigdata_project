@@ -73,6 +73,7 @@ def summarize(roster: pd.DataFrame) -> tuple[dict, pd.DataFrame, pd.DataFrame, p
                     "college": college,
                     "first_observed_term": start_term,
                     "english_yes": active,
+                    "english_courses": int(part.english_courses.iloc[position - 1]),
                 })
     by_year = pd.DataFrame([
         {"assumed_year": year, "student_terms": c["student_terms"],
@@ -149,7 +150,9 @@ def main() -> None:
         args, cohort_terms, attempts, COLLEGES, args.output_dir)
     from undergraduate_first_start_supply import analyze as analyze_first_start
     summary["first_start_supply_analysis"] = analyze_first_start(
-        args, cohort_terms, COLLEGES, args.output_dir)
+        args, cohort_terms, attempts, COLLEGES, args.output_dir)
+    from undergraduate_path_patterns import analyze as analyze_patterns
+    summary["path_pattern_analysis"] = analyze_patterns(cohort_terms, args.output_dir)
     (args.output_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(summary, ensure_ascii=False, indent=2))
