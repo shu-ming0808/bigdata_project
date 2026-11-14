@@ -1,7 +1,7 @@
 [project]
 name = "ncu-english-course-analysis"
 version = "0.1.0"
-description = "NCU English-taught course pathway analysis and teacher evidence ranking"
+description = "NCU undergraduate English-taught course pathways and supply analysis"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "numpy>=2.0,<3",
