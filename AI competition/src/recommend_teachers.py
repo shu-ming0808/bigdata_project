@@ -36,6 +36,10 @@ def run_teacher(args):
                     formal_emi_status, instructor_name
              FROM shared_1150012_solo_teacher_v"""
     evidence = frame(args.mysql, args.login_path, args.database, sql)
+    return rank_teachers(args, evidence)
+
+
+def rank_teachers(args, evidence):
     for col in ["course_code", "course_name", "department_name", "teaching_language_raw", "instructor_name"]:
         evidence[col] = evidence[col].fillna("").str.strip()
     evidence = evidence.loc[evidence.instructor_name.ne("")].copy()
@@ -81,12 +85,7 @@ def run_teacher(args):
     }
     (args.output_dir / "teacher_language_summary.json").write_text(
         json.dumps(teacher_language_summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    targets = frame(args.mysql, args.login_path, args.database, """
-        SELECT course_code, course_name, term_code, course_attribute, degree_level
-        FROM shared_1150012_solo_teacher_v
-        WHERE department_name = '資訊工程學系'
-          AND course_code IS NOT NULL AND TRIM(course_code) <> ''
-    """)
+    targets = cs.loc[cs.course_code.ne(""), ["course_code", "course_name", "term_code", "course_attribute", "degree_level"]].copy()
     for col in ["course_code", "course_name", "term_code"]:
         targets[col] = targets[col].fillna("").str.strip()
     if args.required_only:
@@ -229,6 +228,7 @@ def run_teacher(args):
              args.output_dir / "teacher_required_history.csv")
     count = sum(row["at_least_three"] for row in coverage)
     print(f"教師推薦完成：{len(coverage)} 個資工系課號；{count} 個有至少三位證據候選人")
+    return top
 
 
 def main():

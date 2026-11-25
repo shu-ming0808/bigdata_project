@@ -6,7 +6,44 @@ Microsoft × NCU AI 創新應用主題挑戰賽：AI for Better Campus & Life。
 
 作品暫定：**EMI 師資證據助理**。擬定使用情境是系所或承辦人輸入一門預計改為 EMI 的資工系學士班必修課，取得最多三位教師候選，以及同課／相關課經驗、既往英語與正式 EMI、時間新近性和待核對行政限制。正式服務單位與工作流程尚待訪談確認，不與研究專題所屬單位混用。
 
-目前是推薦分析原型，尚未完成生成式 AI Agent、前端或 Microsoft 產品串接；不能宣稱已部署或已獲承辦單位採用。
+目前提供單課合成案例的 React 與 FastAPI 展示。預設由 Codex CLI 產生摘要，也可設定 Azure OpenAI 產生有引用的說明。
+
+## 使用 Docker Compose
+
+在 `AI competition` 目錄執行以下指令，Compose 會建置所需映像、啟動前後端，並等到網頁服務可連到 API：
+
+```bash
+docker compose up --build --wait
+```
+
+開啟 http://127.0.0.1:8080 。預設提供合成案例與本機規則摘要，首次建置需連網。結束展示時，在同一目錄執行：
+
+```bash
+docker compose down
+```
+
+若要沿用主機已登入的 Codex CLI，首次啟動前複製 `compose.codex.yaml` 為 `compose.override.yaml`。Compose 之後每次啟停都會自動套用。此設定唯讀掛載主機的 `${CODEX_HOME:-$HOME/.codex}/auth.json`。Linux 預設 UID/GID 為 1000；其他使用者可在本目錄的 `.env` 設定 `DEMO_UID` 與 `DEMO_GID`。連接埠可用 `DEMO_PORT` 調整。
+
+## 啟動互動 Demo
+
+在 `AI competition` 目錄開啟兩個終端機。第一個啟動後端：
+
+```bash
+uv sync --locked
+uv run --locked uvicorn backend.app:app --host 127.0.0.1 --port 8000
+```
+
+第二個啟動前端：
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+開啟 Vite 顯示的本機網址。查詢 CE2005、勾選候選人並產生摘要，點選引用可展開對應紀錄。資料與分數為合成展示案例，展示時不連線校務資料庫。
+
+預設 `EXPLANATION_MODE=codex`。在啟動後端的帳號下執行 `codex login status` 確認已登入；首次使用可執行 `codex login`。後端透過 PATH 呼叫 `codex exec`，將所選合成案例送至 CLI 使用的模型服務。在合成案例的 Codex 模式中，每次產生說明會呼叫一次 CLI。模型從後端算好的事實中選取重點，顯示文字、筆數與引用由後端依同一組授課紀錄產生。若要離線展示，可設定 `EXPLANATION_MODE=local` 逐筆整理證據。若要使用 Azure，請在後端啟動前設定 `EXPLANATION_MODE=azure`、`AZURE_OPENAI_ENDPOINT`（資源根網址）、`AZURE_OPENAI_DEPLOYMENT`（支援 structured outputs 的部署名稱）與 `AZURE_OPENAI_API_KEY`。憑證僅置於後端環境。Azure 失敗時畫面顯示錯誤，候選與證據仍可操作。
 
 ## 已有能力
 
@@ -54,3 +91,11 @@ Microsoft × NCU AI 創新應用主題挑戰賽：AI for Better Campus & Life。
 ## Note：權重
 
 現行權重是暫定規則。後續可請使用單位以 AHP 成對比較構面重要性並檢查一致性；尚未取得專家判斷，不宣稱已用 AHP 算出權重。
+
+## Demo 中的研究背景
+
+開課規劃區呈現[修業階段課程供給與首次修讀](../Big%20Data%20Analytics%20Program/專題_修業階段供給與首次修讀.md)第 3.1 節的資訊電機學院彙總與第 3.3 節的代理指標限制，並依[授課語言轉換研究計畫](../Big%20Data%20Analytics%20Program/RESEARCH_PLAN.md)說明後續追蹤方法。研究數據是文件記載的歷史彙總；下方 CE2005 教師查詢使用合成案例。教師排序及模型摘要只取用該案例的授課證據。
+
+## CE2005 實際開課案例
+
+在本目錄執行 `uv run --locked python src/build_demo_case.py "<開課資料 CSV 路徑>"`，再執行 `docker compose up --build --wait --force-recreate`。轉換器使用 1051–1151 的開課檔、排除無班次鍵與鍵值重複的列，按既有正常開課、單一教師與資工系必修推薦規則計分。證據編號為學期與課程流水號。教師按來源姓名歸組並以排名代碼展示，尚未核對人事識別碼。實際案例保存在 Git 忽略的 outputs/demo，唯讀掛載到後端；缺少快照時，實際資料查詢會提示尚未載入，使用者可自行開啟合成案例。實際資料使用本機摘要，可在頁面切換至合成案例測試 Codex。

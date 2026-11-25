@@ -1,0 +1,8 @@
+{
+  "course_code": "CE2005",
+  "version": "synthetic-1",
+  "candidates": [
+    {"id":"A","name":"示例教師甲","scores":{"同課經驗":16.67,"正式 EMI":0,"英語授課":5,"相關課程":0,"新近性":10},"evidence":[{"id":"E1","term":"示例學期 2","course_code":"CE2005","course":"CE2005","language":"英語","emi":"未知"}]},
+    {"id":"B","name":"示例教師乙","scores":{"同課經驗":0,"正式 EMI":3.33,"英語授課":1,"相關課程":9.67,"新近性":8},"evidence":[{"id":"E2","term":"示例學期 1","course_code":"DEMO101","course":"相關課程 DEMO101","language":"英語","emi":"是"}]}
+  ]
+}

@@ -1,0 +1,30 @@
+name: emi-demo
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      EXPLANATION_MODE: ${EXPLANATION_MODE:-local}
+      AZURE_OPENAI_ENDPOINT:
+      AZURE_OPENAI_DEPLOYMENT:
+      AZURE_OPENAI_API_KEY:
+    volumes:
+      - ./outputs/demo:/app/outputs/demo:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/courses/CE2005/candidates?synthetic=true', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${DEMO_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/courses/CE2005/candidates?synthetic=true"]
+      interval: 5s
+      timeout: 4s
+      retries: 12

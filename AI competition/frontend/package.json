@@ -1,0 +1,1 @@
+{"name":"emi-demo","private":true,"type":"module","scripts":{"dev":"vite","build":"tsc --noEmit && vite build"},"dependencies":{"react":"^19","react-dom":"^19"},"devDependencies":{"@types/react":"^19","@types/react-dom":"^19","typescript":"^5","vite":"^7"}}

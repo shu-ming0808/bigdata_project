@@ -1,0 +1,47 @@
+:root {
+  color: #20262d;
+  background: #faf9f6;
+  font: 18px/1.55 system-ui, "Microsoft JhengHei", sans-serif;
+  --ink-blue: #174a78;
+  --line: #c9cdcf;
+  accent-color: var(--ink-blue);
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1200px; margin: auto; padding: 24px 32px 48px; }
+h1 { margin: 0 0 16px; font-size: 32px; }
+h2 { margin: 20px 0 8px; font-size: 28px; }
+h3 { margin: 0; font-size: 21px; }
+.toolbar, form { display: flex; align-items: center; gap: 12px; }
+.toolbar { justify-content: space-between; padding-block: 12px; border-block: 1px solid var(--line); }
+button, input { font: inherit; }
+button, input:not([type=checkbox]) { border: 1px solid #8a959d; border-radius: 4px; background: white; padding: 5px 12px; color: inherit; }
+input:not([type=checkbox]) { width: 10em; }
+input[type=checkbox] { width: 18px; height: 18px; vertical-align: middle; }
+button:enabled, summary, label:has(input[type=checkbox]) { cursor: pointer; }
+button:enabled:hover { background: #edf3f8; }
+button:disabled { opacity: .55; }
+:focus-visible { outline: 3px solid var(--ink-blue); outline-offset: 3px; }
+.metadata, .selection { font-size: 16px; color: #485463; }
+.metadata { margin: 10px 0; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.comparison { table-layout: fixed; margin-bottom: 16px; font-size: 20px; }
+th, td { padding: 8px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+thead { background: #e9edf0; }
+.comparison th:first-child { width: 24%; }
+tbody th { font-weight: 500; }
+summary { color: var(--ink-blue); }
+td details { font-size: 16px; }
+.selection { margin-right: 16px; }
+.selection + button { background: var(--ink-blue); color: white; border-color: var(--ink-blue); }
+.selection + button:enabled:hover { background: #0d375d; }
+.research { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); }
+.review { display: flex; align-items: start; gap: 24px; }
+.review > ul { flex: 3; margin: 0; padding-left: 24px; }
+.review li { margin-bottom: 12px; }
+.review li button { border: 0; padding: 2px 6px; background: transparent; color: var(--ink-blue); text-decoration: underline; text-underline-offset: 3px; }
+aside { flex: 2; padding: 16px; background: #e9f1f6; }
+[role=alert] { color: #842e21; }
+::selection { background: #ccdfed; }
+.comparison tbody th, .comparison td { padding-block: 4px; }
+.comparison td > details:only-child > summary { font-size: 20px; }
