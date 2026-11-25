@@ -7,6 +7,7 @@ import csv
 import json
 import subprocess
 from pathlib import Path
+from powerbi_privacy import mask_teacher_name
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/"outputs/powerbi"
@@ -22,6 +23,9 @@ def main():
     for name in ("Courses","Candidates","Evidence"):
         with (OUT/f"data/{name}.csv").open(encoding="utf-8-sig") as f:
             tables[name]=list(csv.DictReader(f))
+        for row in tables[name]:
+            if "Teacher" in row:
+                row["Teacher"] = mask_teacher_name(row["Teacher"])
     init=OUT/"create_database.sql"
     init.write_text("IF DB_ID(N'EMI_Demo') IS NULL CREATE DATABASE [EMI_Demo];\n",encoding="utf-8-sig")
     execute(init)

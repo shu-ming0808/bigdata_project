@@ -6,6 +6,7 @@ import csv
 import json
 from pathlib import Path
 import uuid
+from powerbi_privacy import mask_teacher_name
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "outputs/powerbi"
@@ -37,7 +38,7 @@ def build():
             formal=[e for e in ev if e["emi"]=="是"]
             summary=(f"本課 {len(same)} 筆；英語授課 {len(english)} 筆；"
                      f"正式 EMI {len(formal)} 筆。依歷史證據排序，非教學品質評分。")
-            row={"CandidateKey":key,"CourseCode":code,"Rank":rank,"Teacher":c["name"],
+            row={"CandidateKey":key,"CourseCode":code,"Rank":rank,"Teacher":mask_teacher_name(c["name"]),
                  "TotalScore":round(sum(c["scores"].values()),2),
                  "SameCourseScore":c["scores"]["同課經驗"],"EMIScore":c["scores"]["正式 EMI"],
                  "EnglishScore":c["scores"]["英語授課"],"RelatedScore":c["scores"]["相關課程"],
@@ -51,9 +52,12 @@ def build():
                 seen.add(e["id"])
                 evidence.append({"CandidateKey":key,"EvidenceID":e["id"],"Term":e["term"],
                     "CourseCode":e["course_code"],"Course":e["course"],"Language":e["language"],
-                    "FormalEMI":e["emi"],"Teacher":c["name"]})
+                    "FormalEMI":e["emi"],"Teacher":mask_teacher_name(c["name"])})
     if not courses:
         raise ValueError("Build real outputs/demo snapshots first")
+    display_keys = [(c["CourseCode"], c["Teacher"]) for c in candidates]
+    if len(display_keys) != len(set(display_keys)):
+        raise ValueError("Masked-name collision within course; use candidate-key labels before export")
     data=OUT/"data"
     data.mkdir(parents=True,exist_ok=True)
     tables={"Courses":courses,"Candidates":candidates,"Evidence":evidence}
