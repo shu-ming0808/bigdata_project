@@ -1,5 +1,20 @@
 # EMI 師資選擇 agent ：以歷年授課紀錄輔助教師候選推薦
 
+## 公開下載：合成展示版
+
+其他人可直接下載 **[EMI_Public.pbix](public_demo/EMI_Public.pbix)**，在 GitHub 檔案頁按 Download raw file，用 Power BI Desktop 開啟即可操作，不需你的資料庫或金鑰。兩頁已在 Desktop 驗證載入、得分排序與點選教師連動證據。[下載與操作說明](public_demo/README.md)。
+
+要修改報表原始定義，可下載整個倉庫，以 Desktop 開啟 **[EMI_Public.pbip](public_demo/EMI_Public.pbip)** 並重新整理；保留相鄰 Report 與 SemanticModel 資料夾，不能只下載單一 PBIP。
+
+本版獨立虛構 4 門課、6 位示例教師及 25 筆授課紀錄，呼叫同一個正式五構面評分程式，保留兩頁查詢、分數降序橫條及證據連動。**不是把真實教師改名或加亂數，不保留真實數值或排序；不能當研究結論。**沒有資料庫連線、帳密或校務原始資料。
+
+```powershell
+uv run --locked python src/build_public_demo.py
+uv run --locked python -m unittest discover -s src -p test_public_demo.py -v
+```
+
+目前 Power BI 是查詢報表，完整工具型 Agent 尚待實作。前後端 API、Azure SQL 的關係、OpenAI 串接、embedding、防注入與額度規劃見 **[Agent 與 API 架構](AGENT_API_ARCHITECTURE.md)**。Azure SQL 雲端部署目前未由程式驗證；下方的 SQL Server 與 outputs/ 入口是保留於本機的真實資料版本，與公開版分開。
+
 ## 為何做這個主題
 
 > 隱私更新：Power BI 中的教師姓名已改為中間字 O 遮罩，例如「王小明 → 王O明」。候選排名、橫條、摘要與證據表使用相同遮罩；候選仍以 CandidateKey 關聯。原始資料不改，遮罩後仍不得把具授課紀錄的報表當作完全匿名資料公開。

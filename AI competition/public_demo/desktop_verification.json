@@ -1,0 +1,21 @@
+{
+  "verified_on": "2026-11-25",
+  "artifact": "EMI_Public.pbix",
+  "sha256": "5755b5c45bc73ef956f7367ddc171027b0fa573dde876cae4b6ac1083e09fbdc",
+  "source": "synthetic-public-v1",
+  "desktop_opened_and_refreshed": true,
+  "pages": 2,
+  "observed_demo101_scores_descending": [
+    84.22,
+    47.33,
+    37.89
+  ],
+  "teacher_selection_filtered_summary_and_evidence": true,
+  "selected_teacher_A_evidence_rows_observed": 5,
+  "pbix_saved_from_fictional_project_only": true,
+  "not_an_independent_privacy_certification": true,
+  "limitations": [
+    "No Azure deployment or live paid LLM call tested",
+    "No actual tool-calling Agent implemented in this delivery"
+  ]
+}

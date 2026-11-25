@@ -1,0 +1,36 @@
+{
+  "course_code": "DEMO401",
+  "version": "synthetic-public-v1",
+  "candidates": [
+    {
+      "id": "PUBLIC-TF",
+      "name": "示例教師 F",
+      "scores": {
+        "同課經驗": 23.33,
+        "正式 EMI": 0.0,
+        "英語授課": 0.0,
+        "相關課程": 0.0,
+        "新近性": 10.0
+      },
+      "total_score": 33.33,
+      "evidence": [
+        {
+          "id": "PUBLIC-O0024",
+          "term": "1132",
+          "course_code": "DEMO401",
+          "course": "量子運算入門",
+          "language": "國語",
+          "emi": "未知"
+        },
+        {
+          "id": "PUBLIC-O0025",
+          "term": "1151",
+          "course_code": "DEMO401",
+          "course": "量子運算入門",
+          "language": "國語",
+          "emi": "未知"
+        }
+      ]
+    }
+  ]
+}

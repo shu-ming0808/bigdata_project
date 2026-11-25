@@ -1,0 +1,11 @@
+# Desktop machine state and imported caches must never be committed.
+.pbi/
+.platform
+**/localSettings.json
+**/editorSettings.json
+**/diagramLayout.json
+*.pbix
+!EMI_Public.pbix
+# Explicit exception only for this generator's fictional JSON tables.
+!data/
+!data/*.json

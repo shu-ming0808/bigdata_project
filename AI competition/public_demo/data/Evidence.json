@@ -1,0 +1,432 @@
+[
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TA",
+    "EvidenceID": "PUBLIC-O0001",
+    "Term": "1091",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 A"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TA",
+    "EvidenceID": "PUBLIC-O0002",
+    "Term": "1111",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 A"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TA",
+    "EvidenceID": "PUBLIC-O0004",
+    "Term": "1122",
+    "CourseCode": "DEMO111",
+    "Course": "資料結構實作",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 A"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TA",
+    "EvidenceID": "PUBLIC-O0003",
+    "Term": "1141",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 A"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TA",
+    "EvidenceID": "PUBLIC-O0005",
+    "Term": "1142",
+    "CourseCode": "DEMO111",
+    "Course": "資料結構實作",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 A"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TC",
+    "EvidenceID": "PUBLIC-O0011",
+    "Term": "1121",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 C"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TC",
+    "EvidenceID": "PUBLIC-O0010",
+    "Term": "1131",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 C"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TC",
+    "EvidenceID": "PUBLIC-O0012",
+    "Term": "1141",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 C"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0006",
+    "Term": "1061",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0007",
+    "Term": "1081",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0020",
+    "Term": "1092",
+    "CourseCode": "DEMO301",
+    "Course": "網路通訊基礎",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0008",
+    "Term": "1101",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0009",
+    "Term": "1112",
+    "CourseCode": "DEMO111",
+    "Course": "資料結構實作",
+    "Language": "英語",
+    "FormalEMI": "未知",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO101|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0021",
+    "Term": "1112",
+    "CourseCode": "DEMO301",
+    "Course": "網路通訊基礎",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TC",
+    "EvidenceID": "PUBLIC-O0011",
+    "Term": "1121",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 C"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TC",
+    "EvidenceID": "PUBLIC-O0010",
+    "Term": "1131",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 C"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TC",
+    "EvidenceID": "PUBLIC-O0012",
+    "Term": "1141",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 C"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0013",
+    "Term": "1082",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0014",
+    "Term": "1102",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0022",
+    "Term": "1131",
+    "CourseCode": "DEMO311",
+    "Course": "網路通訊實作",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0015",
+    "Term": "1132",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0016",
+    "Term": "1142",
+    "CourseCode": "DEMO211",
+    "Course": "系統架構實作",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0023",
+    "Term": "1151",
+    "CourseCode": "DEMO311",
+    "Course": "網路通訊實作",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TE",
+    "EvidenceID": "PUBLIC-O0017",
+    "Term": "1111",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "國語",
+    "FormalEMI": "未知",
+    "Teacher": "示例教師 E"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TE",
+    "EvidenceID": "PUBLIC-O0018",
+    "Term": "1122",
+    "CourseCode": "DEMO301",
+    "Course": "網路通訊基礎",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 E"
+  },
+  {
+    "CandidateKey": "DEMO201|PUBLIC-TE",
+    "EvidenceID": "PUBLIC-O0019",
+    "Term": "1142",
+    "CourseCode": "DEMO301",
+    "Course": "網路通訊基礎",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 E"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TE",
+    "EvidenceID": "PUBLIC-O0017",
+    "Term": "1111",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "國語",
+    "FormalEMI": "未知",
+    "Teacher": "示例教師 E"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TE",
+    "EvidenceID": "PUBLIC-O0018",
+    "Term": "1122",
+    "CourseCode": "DEMO301",
+    "Course": "網路通訊基礎",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 E"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TE",
+    "EvidenceID": "PUBLIC-O0019",
+    "Term": "1142",
+    "CourseCode": "DEMO301",
+    "Course": "網路通訊基礎",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 E"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0013",
+    "Term": "1082",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0014",
+    "Term": "1102",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0022",
+    "Term": "1131",
+    "CourseCode": "DEMO311",
+    "Course": "網路通訊實作",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0015",
+    "Term": "1132",
+    "CourseCode": "DEMO201",
+    "Course": "系統架構概論",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0016",
+    "Term": "1142",
+    "CourseCode": "DEMO211",
+    "Course": "系統架構實作",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TD",
+    "EvidenceID": "PUBLIC-O0023",
+    "Term": "1151",
+    "CourseCode": "DEMO311",
+    "Course": "網路通訊實作",
+    "Language": "英語",
+    "FormalEMI": "是",
+    "Teacher": "示例教師 D"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0006",
+    "Term": "1061",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0007",
+    "Term": "1081",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0020",
+    "Term": "1092",
+    "CourseCode": "DEMO301",
+    "Course": "網路通訊基礎",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0008",
+    "Term": "1101",
+    "CourseCode": "DEMO101",
+    "Course": "資料結構基礎",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0009",
+    "Term": "1112",
+    "CourseCode": "DEMO111",
+    "Course": "資料結構實作",
+    "Language": "英語",
+    "FormalEMI": "未知",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO301|PUBLIC-TB",
+    "EvidenceID": "PUBLIC-O0021",
+    "Term": "1112",
+    "CourseCode": "DEMO301",
+    "Course": "網路通訊基礎",
+    "Language": "國語",
+    "FormalEMI": "否",
+    "Teacher": "示例教師 B"
+  },
+  {
+    "CandidateKey": "DEMO401|PUBLIC-TF",
+    "EvidenceID": "PUBLIC-O0024",
+    "Term": "1132",
+    "CourseCode": "DEMO401",
+    "Course": "量子運算入門",
+    "Language": "國語",
+    "FormalEMI": "未知",
+    "Teacher": "示例教師 F"
+  },
+  {
+    "CandidateKey": "DEMO401|PUBLIC-TF",
+    "EvidenceID": "PUBLIC-O0025",
+    "Term": "1151",
+    "CourseCode": "DEMO401",
+    "Course": "量子運算入門",
+    "Language": "國語",
+    "FormalEMI": "未知",
+    "Teacher": "示例教師 F"
+  }
+]

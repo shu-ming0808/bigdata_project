@@ -1,0 +1,160 @@
+{
+  "course_code": "DEMO101",
+  "version": "synthetic-public-v1",
+  "candidates": [
+    {
+      "id": "PUBLIC-TA",
+      "name": "示例教師 A",
+      "scores": {
+        "同課經驗": 29.0,
+        "正式 EMI": 26.67,
+        "英語授課": 12.0,
+        "相關課程": 7.05,
+        "新近性": 9.5
+      },
+      "total_score": 84.22,
+      "evidence": [
+        {
+          "id": "PUBLIC-O0001",
+          "term": "1091",
+          "course_code": "DEMO101",
+          "course": "資料結構基礎",
+          "language": "英語",
+          "emi": "是"
+        },
+        {
+          "id": "PUBLIC-O0002",
+          "term": "1111",
+          "course_code": "DEMO101",
+          "course": "資料結構基礎",
+          "language": "英語",
+          "emi": "是"
+        },
+        {
+          "id": "PUBLIC-O0004",
+          "term": "1122",
+          "course_code": "DEMO111",
+          "course": "資料結構實作",
+          "language": "英語",
+          "emi": "是"
+        },
+        {
+          "id": "PUBLIC-O0003",
+          "term": "1141",
+          "course_code": "DEMO101",
+          "course": "資料結構基礎",
+          "language": "英語",
+          "emi": "是"
+        },
+        {
+          "id": "PUBLIC-O0005",
+          "term": "1142",
+          "course_code": "DEMO111",
+          "course": "資料結構實作",
+          "language": "英語",
+          "emi": "是"
+        }
+      ]
+    },
+    {
+      "id": "PUBLIC-TC",
+      "name": "示例教師 C",
+      "scores": {
+        "同課經驗": 14.67,
+        "正式 EMI": 16.67,
+        "英語授課": 7.0,
+        "相關課程": 0.0,
+        "新近性": 9.0
+      },
+      "total_score": 47.33,
+      "evidence": [
+        {
+          "id": "PUBLIC-O0011",
+          "term": "1121",
+          "course_code": "DEMO201",
+          "course": "系統架構概論",
+          "language": "英語",
+          "emi": "是"
+        },
+        {
+          "id": "PUBLIC-O0010",
+          "term": "1131",
+          "course_code": "DEMO101",
+          "course": "資料結構基礎",
+          "language": "英語",
+          "emi": "是"
+        },
+        {
+          "id": "PUBLIC-O0012",
+          "term": "1141",
+          "course_code": "DEMO201",
+          "course": "系統架構概論",
+          "language": "英語",
+          "emi": "是"
+        }
+      ]
+    },
+    {
+      "id": "PUBLIC-TB",
+      "name": "示例教師 B",
+      "scores": {
+        "同課經驗": 25.0,
+        "正式 EMI": 0.0,
+        "英語授課": 1.0,
+        "相關課程": 5.39,
+        "新近性": 6.5
+      },
+      "total_score": 37.89,
+      "evidence": [
+        {
+          "id": "PUBLIC-O0006",
+          "term": "1061",
+          "course_code": "DEMO101",
+          "course": "資料結構基礎",
+          "language": "國語",
+          "emi": "否"
+        },
+        {
+          "id": "PUBLIC-O0007",
+          "term": "1081",
+          "course_code": "DEMO101",
+          "course": "資料結構基礎",
+          "language": "國語",
+          "emi": "否"
+        },
+        {
+          "id": "PUBLIC-O0020",
+          "term": "1092",
+          "course_code": "DEMO301",
+          "course": "網路通訊基礎",
+          "language": "國語",
+          "emi": "否"
+        },
+        {
+          "id": "PUBLIC-O0008",
+          "term": "1101",
+          "course_code": "DEMO101",
+          "course": "資料結構基礎",
+          "language": "國語",
+          "emi": "否"
+        },
+        {
+          "id": "PUBLIC-O0009",
+          "term": "1112",
+          "course_code": "DEMO111",
+          "course": "資料結構實作",
+          "language": "英語",
+          "emi": "未知"
+        },
+        {
+          "id": "PUBLIC-O0021",
+          "term": "1112",
+          "course_code": "DEMO301",
+          "course": "網路通訊基礎",
+          "language": "國語",
+          "emi": "否"
+        }
+      ]
+    }
+  ]
+}

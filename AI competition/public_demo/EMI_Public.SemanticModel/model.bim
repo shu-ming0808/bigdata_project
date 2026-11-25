@@ -1,0 +1,241 @@
+{
+  "compatibilityLevel": 1567,
+  "model": {
+    "culture": "zh-TW",
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "tables": [
+      {
+        "name": "Courses",
+        "columns": [
+          {
+            "name": "CourseCode",
+            "dataType": "string",
+            "sourceColumn": "CourseCode",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "CandidateCount",
+            "dataType": "int64",
+            "sourceColumn": "CandidateCount",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Coverage",
+            "dataType": "string",
+            "sourceColumn": "Coverage",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Courses",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = #table({\"CourseCode\", \"CandidateCount\", \"Coverage\"}, {",
+                "        {\"DEMO101\", 3, \"合成示例：足三人\"},\n        {\"DEMO201\", 3, \"合成示例：足三人\"},\n        {\"DEMO301\", 3, \"合成示例：足三人\"},\n        {\"DEMO401\", 1, \"合成示例：不足三人\"}",
+                "    }),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"CourseCode\", type text}, {\"CandidateCount\", Int64.Type}, {\"Coverage\", type text}})",
+                "in",
+                "    Typed"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "Candidates",
+        "columns": [
+          {
+            "name": "CandidateKey",
+            "dataType": "string",
+            "sourceColumn": "CandidateKey",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "CourseCode",
+            "dataType": "string",
+            "sourceColumn": "CourseCode",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Rank",
+            "dataType": "int64",
+            "sourceColumn": "Rank",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Teacher",
+            "dataType": "string",
+            "sourceColumn": "Teacher",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "TotalScore",
+            "dataType": "double",
+            "sourceColumn": "TotalScore",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "SameCourseScore",
+            "dataType": "double",
+            "sourceColumn": "SameCourseScore",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "EMIScore",
+            "dataType": "double",
+            "sourceColumn": "EMIScore",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "EnglishScore",
+            "dataType": "double",
+            "sourceColumn": "EnglishScore",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "RelatedScore",
+            "dataType": "double",
+            "sourceColumn": "RelatedScore",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "RecencyScore",
+            "dataType": "double",
+            "sourceColumn": "RecencyScore",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Summary",
+            "dataType": "string",
+            "sourceColumn": "Summary",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Review",
+            "dataType": "string",
+            "sourceColumn": "Review",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Candidates",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = #table({\"CandidateKey\", \"CourseCode\", \"Rank\", \"Teacher\", \"TotalScore\", \"SameCourseScore\", \"EMIScore\", \"EnglishScore\", \"RelatedScore\", \"RecencyScore\", \"Summary\", \"Review\"}, {",
+                "        {\"DEMO101|PUBLIC-TA\", \"DEMO101\", 1, \"示例教師 A\", 84.22, 29.0, 26.67, 12.0, 7.05, 9.5, \"完全虛構。此課 3 班；英語 5 班；正式 EMI 5 班。分數由五構面規則計算。\", \"合成展示，非真實推薦。聘任、意願、負荷與時段均未知；不得解讀為教學品質。\"},\n        {\"DEMO101|PUBLIC-TC\", \"DEMO101\", 2, \"示例教師 C\", 47.33, 14.67, 16.67, 7.0, 0.0, 9.0, \"完全虛構。此課 1 班；英語 3 班；正式 EMI 3 班。分數由五構面規則計算。\", \"合成展示，非真實推薦。聘任、意願、負荷與時段均未知；不得解讀為教學品質。\"},\n        {\"DEMO101|PUBLIC-TB\", \"DEMO101\", 3, \"示例教師 B\", 37.89, 25.0, 0.0, 1.0, 5.39, 6.5, \"完全虛構。此課 3 班；英語 1 班；正式 EMI 0 班。分數由五構面規則計算。\", \"合成展示，非真實推薦。聘任、意願、負荷與時段均未知；不得解讀為教學品質。\"},\n        {\"DEMO201|PUBLIC-TC\", \"DEMO201\", 1, \"示例教師 C\", 65.67, 22.33, 23.33, 11.0, 0.0, 9.0, \"完全虛構。此課 2 班；英語 3 班；正式 EMI 3 班。分數由五構面規則計算。\", \"合成展示，非真實推薦。聘任、意願、負荷與時段均未知；不得解讀為教學品質。\"},\n        {\"DEMO201|PUBLIC-TD\", \"DEMO201\", 2, \"示例教師 D\", 57.04, 28.5, 10.0, 3.0, 5.54, 10.0, \"完全虛構。此課 3 班；英語 3 班；正式 EMI 3 班。分數由五構面規則計算。\", \"合成展示，非真實推薦。聘任、意願、負荷與時段均未知；不得解讀為教學品質。\"},\n        {\"DEMO201|PUBLIC-TE\", \"DEMO201\", 3, \"示例教師 E\", 30.83, 12.67, 6.67, 2.0, 0.0, 9.5, \"完全虛構。此課 1 班；英語 2 班；正式 EMI 2 班。分數由五構面規則計算。\", \"合成展示，非真實推薦。聘任、意願、負荷與時段均未知；不得解讀為教學品質。\"},\n        {\"DEMO301|PUBLIC-TE\", \"DEMO301\", 1, \"示例教師 E\", 62.33, 22.83, 20.0, 10.0, 0.0, 9.5, \"完全虛構。此課 2 班；英語 2 班；正式 EMI 2 班。分數由五構面規則計算。\", \"合成展示，非真實推薦。聘任、意願、負荷與時段均未知；不得解讀為教學品質。\"},\n        {\"DEMO301|PUBLIC-TD\", \"DEMO301\", 2, \"示例教師 D\", 30.36, 0.0, 10.0, 3.0, 7.36, 10.0, \"完全虛構。此課 0 班；英語 3 班；正式 EMI 3 班。分數由五構面規則計算。\", \"合成展示，非真實推薦。聘任、意願、負荷與時段均未知；不得解讀為教學品質。\"},\n        {\"DEMO301|PUBLIC-TB\", \"DEMO301\", 3, \"示例教師 B\", 27.33, 19.83, 0.0, 1.0, 0.0, 6.5, \"完全虛構。此課 2 班；英語 1 班；正式 EMI 0 班。分數由五構面規則計算。\", \"合成展示，非真實推薦。聘任、意願、負荷與時段均未知；不得解讀為教學品質。\"},\n        {\"DEMO401|PUBLIC-TF\", \"DEMO401\", 1, \"示例教師 F\", 33.33, 23.33, 0.0, 0.0, 0.0, 10.0, \"完全虛構。此課 2 班；英語 0 班；正式 EMI 0 班。分數由五構面規則計算。\", \"合成展示，非真實推薦。聘任、意願、負荷與時段均未知；不得解讀為教學品質。\"}",
+                "    }),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"CandidateKey\", type text}, {\"CourseCode\", type text}, {\"Rank\", Int64.Type}, {\"Teacher\", type text}, {\"TotalScore\", type number}, {\"SameCourseScore\", type number}, {\"EMIScore\", type number}, {\"EnglishScore\", type number}, {\"RelatedScore\", type number}, {\"RecencyScore\", type number}, {\"Summary\", type text}, {\"Review\", type text}})",
+                "in",
+                "    Typed"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "SelectedCourseScore",
+            "formatString": "0.00",
+            "expression": "IF(HASONEVALUE(Courses[CourseCode]), MAX(Candidates[TotalScore]), BLANK())"
+          }
+        ]
+      },
+      {
+        "name": "Evidence",
+        "columns": [
+          {
+            "name": "CandidateKey",
+            "dataType": "string",
+            "sourceColumn": "CandidateKey",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "EvidenceID",
+            "dataType": "string",
+            "sourceColumn": "EvidenceID",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Term",
+            "dataType": "string",
+            "sourceColumn": "Term",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "CourseCode",
+            "dataType": "string",
+            "sourceColumn": "CourseCode",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Course",
+            "dataType": "string",
+            "sourceColumn": "Course",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Language",
+            "dataType": "string",
+            "sourceColumn": "Language",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "FormalEMI",
+            "dataType": "string",
+            "sourceColumn": "FormalEMI",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "Teacher",
+            "dataType": "string",
+            "sourceColumn": "Teacher",
+            "summarizeBy": "none"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Evidence",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = #table({\"CandidateKey\", \"EvidenceID\", \"Term\", \"CourseCode\", \"Course\", \"Language\", \"FormalEMI\", \"Teacher\"}, {",
+                "        {\"DEMO101|PUBLIC-TA\", \"PUBLIC-O0001\", \"1091\", \"DEMO101\", \"資料結構基礎\", \"英語\", \"是\", \"示例教師 A\"},\n        {\"DEMO101|PUBLIC-TA\", \"PUBLIC-O0002\", \"1111\", \"DEMO101\", \"資料結構基礎\", \"英語\", \"是\", \"示例教師 A\"},\n        {\"DEMO101|PUBLIC-TA\", \"PUBLIC-O0004\", \"1122\", \"DEMO111\", \"資料結構實作\", \"英語\", \"是\", \"示例教師 A\"},\n        {\"DEMO101|PUBLIC-TA\", \"PUBLIC-O0003\", \"1141\", \"DEMO101\", \"資料結構基礎\", \"英語\", \"是\", \"示例教師 A\"},\n        {\"DEMO101|PUBLIC-TA\", \"PUBLIC-O0005\", \"1142\", \"DEMO111\", \"資料結構實作\", \"英語\", \"是\", \"示例教師 A\"},\n        {\"DEMO101|PUBLIC-TC\", \"PUBLIC-O0011\", \"1121\", \"DEMO201\", \"系統架構概論\", \"英語\", \"是\", \"示例教師 C\"},\n        {\"DEMO101|PUBLIC-TC\", \"PUBLIC-O0010\", \"1131\", \"DEMO101\", \"資料結構基礎\", \"英語\", \"是\", \"示例教師 C\"},\n        {\"DEMO101|PUBLIC-TC\", \"PUBLIC-O0012\", \"1141\", \"DEMO201\", \"系統架構概論\", \"英語\", \"是\", \"示例教師 C\"},\n        {\"DEMO101|PUBLIC-TB\", \"PUBLIC-O0006\", \"1061\", \"DEMO101\", \"資料結構基礎\", \"國語\", \"否\", \"示例教師 B\"},\n        {\"DEMO101|PUBLIC-TB\", \"PUBLIC-O0007\", \"1081\", \"DEMO101\", \"資料結構基礎\", \"國語\", \"否\", \"示例教師 B\"},\n        {\"DEMO101|PUBLIC-TB\", \"PUBLIC-O0020\", \"1092\", \"DEMO301\", \"網路通訊基礎\", \"國語\", \"否\", \"示例教師 B\"},\n        {\"DEMO101|PUBLIC-TB\", \"PUBLIC-O0008\", \"1101\", \"DEMO101\", \"資料結構基礎\", \"國語\", \"否\", \"示例教師 B\"},\n        {\"DEMO101|PUBLIC-TB\", \"PUBLIC-O0009\", \"1112\", \"DEMO111\", \"資料結構實作\", \"英語\", \"未知\", \"示例教師 B\"},\n        {\"DEMO101|PUBLIC-TB\", \"PUBLIC-O0021\", \"1112\", \"DEMO301\", \"網路通訊基礎\", \"國語\", \"否\", \"示例教師 B\"},\n        {\"DEMO201|PUBLIC-TC\", \"PUBLIC-O0011\", \"1121\", \"DEMO201\", \"系統架構概論\", \"英語\", \"是\", \"示例教師 C\"},\n        {\"DEMO201|PUBLIC-TC\", \"PUBLIC-O0010\", \"1131\", \"DEMO101\", \"資料結構基礎\", \"英語\", \"是\", \"示例教師 C\"},\n        {\"DEMO201|PUBLIC-TC\", \"PUBLIC-O0012\", \"1141\", \"DEMO201\", \"系統架構概論\", \"英語\", \"是\", \"示例教師 C\"},\n        {\"DEMO201|PUBLIC-TD\", \"PUBLIC-O0013\", \"1082\", \"DEMO201\", \"系統架構概論\", \"國語\", \"否\", \"示例教師 D\"},\n        {\"DEMO201|PUBLIC-TD\", \"PUBLIC-O0014\", \"1102\", \"DEMO201\", \"系統架構概論\", \"國語\", \"否\", \"示例教師 D\"},\n        {\"DEMO201|PUBLIC-TD\", \"PUBLIC-O0022\", \"1131\", \"DEMO311\", \"網路通訊實作\", \"英語\", \"是\", \"示例教師 D\"},\n        {\"DEMO201|PUBLIC-TD\", \"PUBLIC-O0015\", \"1132\", \"DEMO201\", \"系統架構概論\", \"國語\", \"否\", \"示例教師 D\"},\n        {\"DEMO201|PUBLIC-TD\", \"PUBLIC-O0016\", \"1142\", \"DEMO211\", \"系統架構實作\", \"英語\", \"是\", \"示例教師 D\"},\n        {\"DEMO201|PUBLIC-TD\", \"PUBLIC-O0023\", \"1151\", \"DEMO311\", \"網路通訊實作\", \"英語\", \"是\", \"示例教師 D\"},\n        {\"DEMO201|PUBLIC-TE\", \"PUBLIC-O0017\", \"1111\", \"DEMO201\", \"系統架構概論\", \"國語\", \"未知\", \"示例教師 E\"},\n        {\"DEMO201|PUBLIC-TE\", \"PUBLIC-O0018\", \"1122\", \"DEMO301\", \"網路通訊基礎\", \"英語\", \"是\", \"示例教師 E\"},\n        {\"DEMO201|PUBLIC-TE\", \"PUBLIC-O0019\", \"1142\", \"DEMO301\", \"網路通訊基礎\", \"英語\", \"是\", \"示例教師 E\"},\n        {\"DEMO301|PUBLIC-TE\", \"PUBLIC-O0017\", \"1111\", \"DEMO201\", \"系統架構概論\", \"國語\", \"未知\", \"示例教師 E\"},\n        {\"DEMO301|PUBLIC-TE\", \"PUBLIC-O0018\", \"1122\", \"DEMO301\", \"網路通訊基礎\", \"英語\", \"是\", \"示例教師 E\"},\n        {\"DEMO301|PUBLIC-TE\", \"PUBLIC-O0019\", \"1142\", \"DEMO301\", \"網路通訊基礎\", \"英語\", \"是\", \"示例教師 E\"},\n        {\"DEMO301|PUBLIC-TD\", \"PUBLIC-O0013\", \"1082\", \"DEMO201\", \"系統架構概論\", \"國語\", \"否\", \"示例教師 D\"},\n        {\"DEMO301|PUBLIC-TD\", \"PUBLIC-O0014\", \"1102\", \"DEMO201\", \"系統架構概論\", \"國語\", \"否\", \"示例教師 D\"},\n        {\"DEMO301|PUBLIC-TD\", \"PUBLIC-O0022\", \"1131\", \"DEMO311\", \"網路通訊實作\", \"英語\", \"是\", \"示例教師 D\"},\n        {\"DEMO301|PUBLIC-TD\", \"PUBLIC-O0015\", \"1132\", \"DEMO201\", \"系統架構概論\", \"國語\", \"否\", \"示例教師 D\"},\n        {\"DEMO301|PUBLIC-TD\", \"PUBLIC-O0016\", \"1142\", \"DEMO211\", \"系統架構實作\", \"英語\", \"是\", \"示例教師 D\"},\n        {\"DEMO301|PUBLIC-TD\", \"PUBLIC-O0023\", \"1151\", \"DEMO311\", \"網路通訊實作\", \"英語\", \"是\", \"示例教師 D\"},\n        {\"DEMO301|PUBLIC-TB\", \"PUBLIC-O0006\", \"1061\", \"DEMO101\", \"資料結構基礎\", \"國語\", \"否\", \"示例教師 B\"},\n        {\"DEMO301|PUBLIC-TB\", \"PUBLIC-O0007\", \"1081\", \"DEMO101\", \"資料結構基礎\", \"國語\", \"否\", \"示例教師 B\"},\n        {\"DEMO301|PUBLIC-TB\", \"PUBLIC-O0020\", \"1092\", \"DEMO301\", \"網路通訊基礎\", \"國語\", \"否\", \"示例教師 B\"},\n        {\"DEMO301|PUBLIC-TB\", \"PUBLIC-O0008\", \"1101\", \"DEMO101\", \"資料結構基礎\", \"國語\", \"否\", \"示例教師 B\"},\n        {\"DEMO301|PUBLIC-TB\", \"PUBLIC-O0009\", \"1112\", \"DEMO111\", \"資料結構實作\", \"英語\", \"未知\", \"示例教師 B\"},\n        {\"DEMO301|PUBLIC-TB\", \"PUBLIC-O0021\", \"1112\", \"DEMO301\", \"網路通訊基礎\", \"國語\", \"否\", \"示例教師 B\"},\n        {\"DEMO401|PUBLIC-TF\", \"PUBLIC-O0024\", \"1132\", \"DEMO401\", \"量子運算入門\", \"國語\", \"未知\", \"示例教師 F\"},\n        {\"DEMO401|PUBLIC-TF\", \"PUBLIC-O0025\", \"1151\", \"DEMO401\", \"量子運算入門\", \"國語\", \"未知\", \"示例教師 F\"}",
+                "    }),",
+                "    Typed = Table.TransformColumnTypes(Source, {{\"CandidateKey\", type text}, {\"EvidenceID\", type text}, {\"Term\", type text}, {\"CourseCode\", type text}, {\"Course\", type text}, {\"Language\", type text}, {\"FormalEMI\", type text}, {\"Teacher\", type text}})",
+                "in",
+                "    Typed"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "6632b805-aed7-5cd7-adc0-fc5bf5e82a1c",
+        "fromTable": "Candidates",
+        "fromColumn": "CourseCode",
+        "toTable": "Courses",
+        "toColumn": "CourseCode",
+        "crossFilteringBehavior": "oneDirection"
+      },
+      {
+        "name": "be26ef38-89b6-58ca-90e4-c4a28c5768e4",
+        "fromTable": "Evidence",
+        "fromColumn": "CandidateKey",
+        "toTable": "Candidates",
+        "toColumn": "CandidateKey",
+        "crossFilteringBehavior": "oneDirection"
+      }
+    ]
+  }
+}

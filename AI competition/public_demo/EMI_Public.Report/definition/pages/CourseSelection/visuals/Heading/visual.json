@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "Heading",
+  "position": {
+    "x": 24,
+    "y": 12,
+    "width": 990,
+    "height": 50,
+    "z": 0,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "01 課程與候選比較｜完全合成展示，非真實教師資料",
+                    "textStyle": {
+                      "fontFamily": "Microsoft JhengHei",
+                      "fontSize": "19pt",
+                      "color": "#243746"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

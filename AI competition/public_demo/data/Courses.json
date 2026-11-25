@@ -1,0 +1,22 @@
+[
+  {
+    "CourseCode": "DEMO101",
+    "CandidateCount": 3,
+    "Coverage": "合成示例：足三人"
+  },
+  {
+    "CourseCode": "DEMO201",
+    "CandidateCount": 3,
+    "Coverage": "合成示例：足三人"
+  },
+  {
+    "CourseCode": "DEMO301",
+    "CandidateCount": 3,
+    "Coverage": "合成示例：足三人"
+  },
+  {
+    "CourseCode": "DEMO401",
+    "CandidateCount": 1,
+    "Coverage": "合成示例：不足三人"
+  }
+]
