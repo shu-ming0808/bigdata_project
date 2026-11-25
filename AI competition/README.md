@@ -1,12 +1,91 @@
 # AI competition
 
+## 為何選擇 Azure 與 Power BI
+
+本作品要協助校務承辦人，從歷年開課紀錄找到可追溯的教師候選。工具選擇同時考慮校務資料的保密需求，以及承辦人實際查詢、比較與查證的操作負擔。
+
+### Azure：以校方可管理的 AI 服務作為規劃方向
+
+校務資料包含教師姓名、授課紀錄及可能涉及個人的資訊，使用範圍受資料授權與保密約定限制。因此規劃採用 Azure OpenAI，由組織管理資源、存取權限與後端憑證，並在獲准部署時評估角色權限、私人端點及網路限制。模型僅根據必要的結構化證據協助整理理由，分數仍由可回查的程式規則計算。
+
+Microsoft 說明，Azure 所售模型的提示與輸出不會在未經許可或指示下用於訓練生成式基礎模型；但這不代表零留存、零監測或必然符合校方規範。資料處理地理範圍、功能留存與濫用監測仍依部署類型及服務設定而異。**Azure 是可納入組織治理的選項，不能只因使用 Azure 就宣稱校務資料已獲保密保障。**
+
+目前真實校務快照只使用本機摘要；Azure 流程僅供合成案例測試，Power BI 尚未直接串接 Azure。尚未完成真實 Azure 部署呼叫或私人端點設定驗證。未取得校方資料外送授權前，原始資料與具名證據維持本機，不因參賽而上傳模型服務。
+
+參考：[Microsoft 資料、隱私與安全說明](https://learn.microsoft.com/en-us/azure/foundry/responsible-ai/openai/data-privacy)、[組織權限架構](https://learn.microsoft.com/azure/architecture/ai-ml/architecture/baseline-openai-e2e-chat)、[私人端點與網路設定](https://learn.microsoft.com/en-us/azure/foundry-classic/openai/how-to/network)。
+
+### Power BI：讓校務人員以選課、比較與查證完成工作
+
+Power BI 作為主要展示與查詢介面，讓承辦人不用操作 Python 或 SQL，就能選擇課程、比較候選教師的分項證據分數，再點選教師查看授課歷史與證據 ID。兩頁導覽將「先看候選」與「再查依據」串起來，也把未知行政資格保留為待核對事項，支援人工決策。
+
+- **容易閱讀：**以橫條排名、分項表格及文字摘要呈現，降低逐筆翻找資料的負擔。
+- **容易查證：**課程、候選與證據連動，可追溯推薦依據；實際能節省多少時間，仍需承辦人操作測試。
+- **方便維護：**連接本機 SQL Server 的專用展示表，透過 Import 重新整理取得更新資料；分數、資料與介面各自維護。
+- **控制資料範圍：**目前只在本機 Desktop 使用，未發布 Power BI Service。Import 報表可能包含具名資料，PBIX、模型與輸出也需當作受保護檔案，不公開下載；未來分享須另核對校方授權、工作區及存取權限。
+
+Power BI 的定位是讓校務人員更容易理解與覆核推薦，並非已證明承辦人熟悉此工具；Azure 的定位是受控的 AI 說明服務規劃，兩者的正式整合與實際效益仍待驗證。
+
+未來若核准以服務分享，可參照 [Power BI 資料列層級安全性指引](https://learn.microsoft.com/en-us/power-bi/guidance/rls-guidance)設計檢視權限；目前尚未配置或驗證服務端 RLS。
+
+## 主要展示入口：兩頁式 Power BI（2026-11-25）
+
+目前以 **[新版 EMI.pbip](outputs/powerbi_hiring_style/EMI.pbip)** 取代網頁 Demo 作為主要展示入口。[本機操作說明](outputs/powerbi_hiring_style/操作說明.md)。請用 Power BI Desktop 開啟；如需 PBIX，可由 Desktop 另存。
+
+此相對連結供本機使用；outputs/ 被 Git 排除，所以 GitHub 不提供報表與教師明細下載。
+
+| 頁面 | 內容與操作 |
+| --- | --- |
+| 01 課程與候選比較 | 選單一課號，查看候選覆蓋、排名及五構面分數；按「查看推薦」進第二頁 |
+| 02 教師得分與授課證據 | 教師總分橫條由高到低；點教師篩選推薦摘要與授課證據，可返回選課 |
+
+兩頁均為 1280 × 720，背景與白色分區取自使用者指定 Employee Hiring and History.pbix。原範例及舊 EMI 報表保留。圖表顯示該課現有快照候選，最多三位；不是全校教授排名，未選單一課號時總分圖留白。左下摘要表可水平捲動查看行政待核對欄。
+
+已在 Desktop 成功開啟並重新整理 SQL Server Import 資料，確認 CE2005 跨頁同步、84.00 → 55.67 → 49.00 降序及點教師篩選證據，已本機儲存。產生時的 17 份報表定義通過 JSON schema；其餘課程仍需逐項驗收。
+
+目前 Power BI 呈現既有規則分數及本機事實摘要，尚未把 Azure／LLM 即時說明整合進報表。分數不是教學品質或適任機率，行政資格待核對。
+
+### 更新新版報表
+
+若來源改變，先重建真實候選快照，再在本目錄依序執行：
+
+    uv run --locked python src/build_powerbi_demo.py
+    uv run --locked python src/load_powerbi_sqlserver.py
+    uv run --locked python src/style_powerbi_demo.py
+    uv run --locked python src/build_powerbi_two_pages.py
+    uv run --locked python src/build_powerbi_hiring_style.py
+
+最後用 Desktop 開啟新版 EMI.pbip 並重新整理。產生器重跑會覆寫對應輸出定義；手動微調後請另存工作副本。報表、教師明細與資料均只留本機，未發布雲端。
+
+## SQL Server 與 Power BI
+
+本機已建立 EMI_Demo 資料庫與 pbi 三表；推薦報表可透過 SQL Server 匯入模式連線。更新入口為 `src/load_powerbi_sqlserver.py`，設定、更新順序與驗收限制見 [SQL Server / Power BI](SQLSERVER_POWERBI.md)。本次僅匯入推薦展示資料，網頁後端仍讀取本機快照，學生資料與原 MySQL 保留。
+
+<details>
+<summary>早期 Power BI 與網頁 Demo 操作紀錄（非目前主要入口）</summary>
+
+## 舊版 Power BI 本機報表專案
+
+執行 `uv run --locked python src/build_powerbi_demo.py`，從真實候選快照建立 `outputs/powerbi/EMI.pbip`。報表包含課程篩選、候選排名及分項、逐筆授課證據、本機事實摘要與待核對條件。資料模型為 Courses → Candidates → Evidence，含真實姓名的 CSV、模型與報表均在被 Git 排除的 outputs/，未發布。
+
+需使用 Power BI Desktop 開啟 EMI.pbip 並重新整理；閱讀版 Power BI App 無法代替 Desktop。已驗證報表 JSON schema、主外鍵與筆數，尚未在 Desktop 驗證版面和點選互動，不能宣稱已完成 PBIX 視覺驗收。詳細操作見本機 outputs/powerbi/開啟與展示.md。資料更新後先重建真實快照，再執行上述產生器。
+
+## 目前本機展示（2026-11-25）
+
+頁面預設讀取真實開課快照，而非合成教師。查 CE2005 看三位候選，查 CE1003 看不足三人的真實情境。姓名按來源顯示，尚未核對教師人事 ID；歷史證據分數沿用正式五構面推薦規則，不使用合成案例簡化規則。實際資料摘要始終在本機產生。
+
+重建全部資工必修快照（僅限授權本機；不會把資料提交 Git）：
+
+    uv run --locked python src/build_demo_case.py "<開課資料 CSV 路徑>" --all-required --show-names
+
+不加 --show-names 則以候選代碼顯示。19 門快照儲存於被 Git 排除的 outputs/demo/。來源更新後須重建並重啟後端；這是本機檔案快照，不是即時資料庫連線。對外展示姓名與紀錄仍須依資料授權處理。以下保留先前操作說明，合成模式須自行勾選。
+
 ## 競賽與目標
 
 Microsoft × NCU AI 創新應用主題挑戰賽：AI for Better Campus & Life。
 
 作品暫定：**EMI 師資證據助理**。擬定使用情境是系所或承辦人輸入一門預計改為 EMI 的資工系學士班必修課，取得最多三位教師候選，以及同課／相關課經驗、既往英語與正式 EMI、時間新近性和待核對行政限制。正式服務單位與工作流程尚待訪談確認，不與研究專題所屬單位混用。
 
-目前提供單課合成案例的 React 與 FastAPI 展示。預設由 Codex CLI 產生摘要，也可設定 Azure OpenAI 產生有引用的說明。
+目前提供單課合成案例的 React 與 FastAPI 展示。合成案例預設使用 Azure OpenAI 選擇有證據的事實，後端產生筆數、文字與引用。設定與驗收見 [Azure 展示說明](AZURE_DEMO.md)。
 
 ## 使用 Docker Compose
 
@@ -16,7 +95,7 @@ Microsoft × NCU AI 創新應用主題挑戰賽：AI for Better Campus & Life。
 docker compose up --build --wait
 ```
 
-開啟 http://127.0.0.1:8080 。預設提供合成案例與本機規則摘要，首次建置需連網。結束展示時，在同一目錄執行：
+開啟 http://127.0.0.1:8080 。預設提供合成案例與 Azure 說明；先依 AZURE_DEMO.md 設定 .env。缺設定時候選與證據仍可操作，摘要會提示缺少設定。首次建置需連網。結束展示時，在同一目錄執行：
 
 ```bash
 docker compose down
@@ -41,9 +120,11 @@ npm ci
 npm run dev
 ```
 
-開啟 Vite 顯示的本機網址。查詢 CE2005、勾選候選人並產生摘要，點選引用可展開對應紀錄。資料與分數為合成展示案例，展示時不連線校務資料庫。
+開啟 Vite 顯示的本機網址。查詢 CE2005、勾選候選人並產生摘要，點選引用可展開對應紀錄。資料為合成展示案例，分數由後端依明示的示例規則重算，不由模型給分；展示時不連線校務資料庫。另有 DEMO-LOW 證據不足案例。
 
-預設 `EXPLANATION_MODE=codex`。在啟動後端的帳號下執行 `codex login status` 確認已登入；首次使用可執行 `codex login`。後端透過 PATH 呼叫 `codex exec`，將所選合成案例送至 CLI 使用的模型服務。在合成案例的 Codex 模式中，每次產生說明會呼叫一次 CLI。模型從後端算好的事實中選取重點，顯示文字、筆數與引用由後端依同一組授課紀錄產生。若要離線展示，可設定 `EXPLANATION_MODE=local` 逐筆整理證據。若要使用 Azure，請在後端啟動前設定 `EXPLANATION_MODE=azure`、`AZURE_OPENAI_ENDPOINT`（資源根網址）、`AZURE_OPENAI_DEPLOYMENT`（支援 structured outputs 的部署名稱）與 `AZURE_OPENAI_API_KEY`。憑證僅置於後端環境。Azure 失敗時畫面顯示錯誤，候選與證據仍可操作。
+預設 `EXPLANATION_MODE=azure`，設定方式見 AZURE_DEMO.md。Codex 為選用模式，須明確指定 EXPLANATION_MODE=codex。在啟動後端的帳號下執行 `codex login status` 確認已登入；首次使用可執行 `codex login`。後端透過 PATH 呼叫 `codex exec`，將所選合成案例送至 CLI 使用的模型服務。在合成案例的 Codex 模式中，每次產生說明會呼叫一次 CLI。模型從後端算好的事實中選取重點，顯示文字、筆數與引用由後端依同一組授課紀錄產生。若要離線展示，可設定 `EXPLANATION_MODE=local` 逐筆整理證據。若要使用 Azure，請在後端啟動前設定 `EXPLANATION_MODE=azure`、`AZURE_OPENAI_ENDPOINT`（資源根網址）、`AZURE_OPENAI_DEPLOYMENT`（支援 structured outputs 的部署名稱）與 `AZURE_OPENAI_API_KEY`。憑證僅置於後端環境。Azure 失敗時畫面顯示錯誤，候選與證據仍可操作。
+
+</details>
 
 ## 已有能力
 
@@ -74,10 +155,10 @@ npm run dev
 
 需本機 MySQL login-path codex-local、ncu_course_flow_1150012 與 shared_1150012_solo_teacher_v。原始資料不隨倉庫提供。
 
-## 下一步與 Demo
+## 下一步：驗證 Power BI 與補上 AI 說明
 
 1. 確認一個實際使用者痛點：把查歷史紀錄的時間縮短，並讓候選理由可逐條回查；請承辦／系所審核少量案例。
-2. 先做單課流程：輸入 CE2005 → 候選與分項得分 → 展開證據 → 行政待核對。不足三人就顯示實際人數。
+2. 兩頁單課流程已可操作；接著逐項檢查 19 門課、候選不足三人的情境、跨頁同步及清除教師選取。
 3. 加入受限 AI 說明：只根據檢索回來的結構化證據摘要，每項理由附證據 ID，缺資料須回答未知；不讓模型自行編造教師資格或分數。
 4. 視授權與可用環境選擇 Microsoft 模型／工具串接；原始校務資料不得因參賽而自動送往雲端。公開 Demo 優先使用明示的合成示例或核准去識別證據。
 5. 評估證據引用正確率、無證據陳述率、查找耗時及承辦人候選合理性；尚無標註前不宣稱推薦準確率。
@@ -92,10 +173,10 @@ npm run dev
 
 現行權重是暫定規則。後續可請使用單位以 AHP 成對比較構面重要性並檢查一致性；尚未取得專家判斷，不宣稱已用 AHP 算出權重。
 
-## Demo 中的研究背景
+## 舊網頁 Demo 的研究背景（保留紀錄）
 
 開課規劃區呈現[修業階段課程供給與首次修讀](../Big%20Data%20Analytics%20Program/專題_修業階段供給與首次修讀.md)第 3.1 節的資訊電機學院彙總與第 3.3 節的代理指標限制，並依[授課語言轉換研究計畫](../Big%20Data%20Analytics%20Program/RESEARCH_PLAN.md)說明後續追蹤方法。研究數據是文件記載的歷史彙總；下方 CE2005 教師查詢使用合成案例。教師排序及模型摘要只取用該案例的授課證據。
 
-## CE2005 實際開課案例
+## CE2005 舊網頁實際開課案例（保留紀錄）
 
 在本目錄執行 `uv run --locked python src/build_demo_case.py "<開課資料 CSV 路徑>"`，再執行 `docker compose up --build --wait --force-recreate`。轉換器使用 1051–1151 的開課檔、排除無班次鍵與鍵值重複的列，按既有正常開課、單一教師與資工系必修推薦規則計分。證據編號為學期與課程流水號。教師按來源姓名歸組並以排名代碼展示，尚未核對人事識別碼。實際案例保存在 Git 忽略的 outputs/demo，唯讀掛載到後端；缺少快照時，實際資料查詢會提示尚未載入，使用者可自行開啟合成案例。實際資料使用本機摘要，可在頁面切換至合成案例測試 Codex。
